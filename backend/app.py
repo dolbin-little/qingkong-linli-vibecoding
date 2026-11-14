@@ -106,6 +106,8 @@ def state(u=Depends(user)):
                         'legs': [{**leg, 'order_id': leg['order_id'] if leg['order_id'] in owned else None} for leg in f['legs']]}
                        for f in s['flights'] if owned.intersection(f['orders'])]
         s['dispatches'] = []; s['logs'] = []; s['experiments'] = []
+        # Planning candidates contain other stations' operational details.
+        s['flight_tasks'] = []
     return {**s, 'metrics': metrics(s), 'products': PRODUCTS, 'user': u,
             'pickup_points': list_pickup_points(s['zones'])}
 
@@ -170,7 +172,7 @@ def return_order(oid: str, u=Depends(user)):
         rid = f"LH-{s['next_order']}"; s['next_order'] += 1
         ret = {**o, 'id': rid, 'original_id': oid, 'kind': 'return', 'status': 'pending',
                'created': s['clock'], 'deadline': s['clock']+15, 'delivered_at': None, 'returned_at': None,
-               'drone_id': None, 'amount': 0, 'events': [], 'payment': 'not_required'}
+               'drone_id': None, 'flight_task_id': None, 'amount': 0, 'events': [], 'payment': 'not_required'}
         o['status'] = 'return_requested'; event(s, o, f'已申请无人机上门回收 · {rid}')
         event(s, ret, '回收任务已创建'); s['orders'].insert(0, ret)
         if s['settings']['auto_dispatch']: apply_dispatch(s)
@@ -214,7 +216,7 @@ class WeatherInput(BaseModel):
 @app.post('/api/weather')
 def weather(body: WeatherInput, u=Depends(admin)):
     with store.transaction() as s:
-        if any(not f['done'] for f in s['flights']): raise HTTPException(409, '请等待当前航班返站后切换天气；本版本不模拟空中突变飞控')
+        if any(not f['done'] for f in s['flights']) or any(t['phase'] not in ('COMPLETED','CANCELLED','RECOVERED') for t in s.get('flight_tasks',[])): raise HTTPException(409, '请等待当前航班返站后切换天气；本版本不模拟空中突变飞控')
         s['weather'] = body.model_dump(); store.log(s, f'天气切换：{body.label}，后续任务使用新能耗参数', 'weather')
         if s['settings']['auto_dispatch']: apply_dispatch(s)
     return {'ok': True}
@@ -229,7 +231,7 @@ def update_station(sid: str, body: StationInput, u=Depends(admin)):
     with store.transaction() as s:
         st = next((x for x in s['stations'] if x['id'] == sid), None)
         if not st: raise HTTPException(404, '站点不存在')
-        if body.online is False and any(not f['done'] and f['station_id'] == sid for f in s['flights']): raise HTTPException(409, '有航班待返站，不能停用')
+        if body.online is False and (any(not f['done'] and f['station_id'] == sid for f in s['flights']) or any(t['station_id'] == sid and t['phase'] not in ('COMPLETED','CANCELLED','RECOVERED') for t in s.get('flight_tasks', []))): raise HTTPException(409, '有任务预占或航班待返站，不能停用')
         if body.online is not None: st['online'] = body.online
         if body.product: st['inventory'][body.product] += body.add_stock
         store.log(s, f"{st['name']} 配置已更新", 'station')
@@ -243,7 +245,7 @@ def update_drone(did: str, body: DroneInput, u=Depends(admin)):
     with store.transaction() as s:
         d = next((x for x in s['drones'] if x['id'] == did), None)
         if not d: raise HTTPException(404, '无人机不存在')
-        if d['status'] == 'flying': raise HTTPException(409, '飞行中不能切换维护状态')
+        if d['status'] in ('flying','flight_active','flight_reserved','recovery_required'): raise HTTPException(409, '任务占用或待核对的飞机不能切换维护状态，请先处理飞行任务')
         d['status'] = body.status; store.log(s, f'{did} 状态变更为 {body.status}', 'device')
     return d
 
@@ -258,7 +260,7 @@ class ZoneInput(BaseModel):
 def add_zone(body: ZoneInput, u=Depends(admin)):
     with store.transaction() as s:
         if len(s['zones']) >= 10: raise HTTPException(409, '最多 10 个禁飞区域')
-        if any(not f['done'] for f in s['flights']): raise HTTPException(409, '请等待所有航班返站后编辑禁飞区')
+        if any(not f['done'] for f in s['flights']) or any(t['phase'] not in ('COMPLETED','CANCELLED','RECOVERED') for t in s.get('flight_tasks',[])): raise HTTPException(409, '请等待所有航班返站后编辑禁飞区')
         z = body.model_dump()
         if z['x']+z['w']>995 or z['y']+z['h']>695: raise HTTPException(422, '区域超出地图')
         if any(inside((p['x'],p['y']), z) for p in s['stations']+s['orders'] if p.get('status') not in ('cancelled', 'returned', 'completed')):
@@ -269,7 +271,7 @@ def add_zone(body: ZoneInput, u=Depends(admin)):
 @app.delete('/api/zones/{zid}')
 def delete_zone(zid: str, u=Depends(admin)):
     with store.transaction() as s:
-        if any(not f['done'] for f in s['flights']): raise HTTPException(409, '请等待所有航班返站')
+        if any(not f['done'] for f in s['flights']) or any(t['phase'] not in ('COMPLETED','CANCELLED','RECOVERED') for t in s.get('flight_tasks',[])): raise HTTPException(409, '请等待所有航班返站')
         s['zones'] = [z for z in s['zones'] if z['id'] != zid]
     return {'ok': True}
 
@@ -365,6 +367,8 @@ class ResetInput(BaseModel):
 @app.post('/api/reset')
 def reset(body: ResetInput, u=Depends(admin)):
     with store.transaction() as s:
+        if any(t['phase'] not in ('COMPLETED','CANCELLED','RECOVERED') for t in s.get('flight_tasks',[])):
+            raise HTTPException(409,'有关联飞行任务未结束，禁止重置订单与库存')
         backup = store.ROOT/'data'/f'backup-{int(time.time())}.json'
         backup.write_text(json.dumps(s, ensure_ascii=False, indent=2), encoding='utf-8')
         s.clear(); s.update(store.seed_state())

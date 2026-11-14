@@ -9,8 +9,10 @@ def key(root=ROOT):
     if not p.exists():p.write_text(secrets.token_hex(32),encoding='ascii')
     return p.read_text(encoding='ascii').strip()
 
-def serve(port=18952):
-    engine=FlightEngine();token=key();thread=threading.Thread(target=engine.loop,daemon=True);thread.start()
+def serve(port=19052):
+    from backend.flight_orders import FlightOrders
+    business=FlightOrders();business.recover_after_restart()
+    engine=FlightEngine(business=business);token=key();thread=threading.Thread(target=engine.loop,daemon=True);thread.start()
     class Handler(BaseHTTPRequestHandler):
         def log_message(self,*args):pass
         def reply(self,code,obj):
@@ -40,4 +42,4 @@ def serve(port=18952):
     finally:engine.running=False;server.server_close()
 
 if __name__=='__main__':
-    a=argparse.ArgumentParser();a.add_argument('--port',default=18952,type=int);serve(a.parse_args().port)
+    a=argparse.ArgumentParser();a.add_argument('--port',default=19052,type=int);serve(a.parse_args().port)

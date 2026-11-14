@@ -26,7 +26,7 @@ for _ in range(150):
     if not s['telemetry']['armed'] and s['phase']=='STOPPED':break
     time.sleep(.2)
 record('manual flight lands and terminates',not s['telemetry']['armed'] and s['phase']=='STOPPED')
-cmd('connect',{'endpoint':'udpout:localhost:18651'});time.sleep(1.5);s=rpc()
+cmd('connect',{'endpoint':'udpout:localhost:18751'});time.sleep(1.5);s=rpc()
 record('non-allowlisted endpoint classified external',not s['simulation'] and s['traffic']['received']>0)
 try:cmd('load',{'scenario':'neighborhood'});record('external device defaults read only',False)
 except ValueError as e:record('external device defaults read only','只读' in str(e),str(e))

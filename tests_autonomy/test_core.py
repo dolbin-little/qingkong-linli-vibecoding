@@ -92,6 +92,6 @@ def test_software_guard_never_forces_motor_cut():
 
 def test_local_simulator_udp_stays_on_loopback():
     from autonomy.mavlink_adapter import EphemeralUDP
-    link=EphemeralUDP('udpout:127.0.0.1:18651')
+    link=EphemeralUDP('udpout:127.0.0.1:18751')
     try:assert link.port.getsockname()[0]=='127.0.0.1'
     finally:link.close()

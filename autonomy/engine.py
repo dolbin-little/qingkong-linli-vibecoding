@@ -12,7 +12,8 @@ DELIVERY_TEXT={'PENDING':'等待到达','DESCENDING':'下降至交付点','LANDI
 FAULT_TEXT={'PAYLOAD_RELEASE_REJECTED':'卸货机构拒绝执行，留在交付点','PAYLOAD_CONFIRM_TIMEOUT':'卸货确认超时，留在交付点','DELIVERY_GROUND_STATE_LOST':'卸货地面条件不满足','RETURN_ARM_FAILED':'交付后重新解锁失败，留在交付点','RETURN_CORRIDOR_UNAVAILABLE':'返航走廊不可达，留在交付点'}
 
 class FlightEngine:
-    def __init__(self,root=ROOT):
+    def __init__(self,root=ROOT,business=None):
+        self.business=business;self.task=None
         self.root=Path(root);self.root.joinpath('logs').mkdir(exist_ok=True,parents=True);self.lock=threading.RLock();self.adapter=None;self.s=scene();self.route=[];self.index=0;self.phase='DISCONNECTED';self.events=[];self.guard=SafetyGuard();self.controller=PositionController(max_speed=2.7);self.tracker=Tracker();self.monitor=ResidualMonitor();self.audit=AuditChain(self.root/'logs/flight-chain.jsonl');self.edge=AuditChain(self.root/'logs/edge-checkpoints.jsonl');self.fault=None;self.simulation=True;self.running=True;self.last_tick=time.monotonic();self.last_sample=0;self.started=None;self.finished=None;self.run_id=None;self.trace=[];self.hold_since=None;self.manual=False;self.lease=None;self.lease_at=0.;self.pending_arm=False;self.returning=False;self.delivery_at=None;self.delivered=False;self.order_id=None;self.reason='请连接模拟飞控或真实遥测';self.cloud=True;self.stats={'ticks':0,'guard_interventions':0,'max_period_ms':0.,'replans':0};self.model_score={'score':0,'status':'待采集'};self.last_manual=0.;self.manual_v=[0.,0.,0.]
     def event(self,name,payload=None):
         item={'time':time.time(),'run_id':self.run_id,'name':name,'details':payload or {}};self.events.insert(0,item);self.events=self.events[:100]
@@ -32,16 +33,38 @@ class FlightEngine:
         if not config.get('real_control_enabled') or not getattr(self,'live_confirmed',False):raise ValueError('真实飞控为只读；需本机配置及桌面确认后启用写控制')
     def action(self,cmd,data=None,owner='web'):
         data=data or {}
+        # Read-only planning and SQLite reads must not hold the flight-loop lock.
+        if cmd=='tasks':
+            return self.business.list() if self.business else {'orders':[], 'tasks':[]}
+        if cmd=='preview_order':
+            if not self.business:raise ValueError('业务联动未启用')
+            return self.business.preview(data.get('order_id'),int(data.get('seed',42)))
         with self.lock:
             if cmd=='lease':return self.take_lease(owner)
+            if cmd in ('cancel_task','recover_task'):
+                self.check_lease(owner)
+                if not self.business:raise ValueError('业务联动未启用')
+                if self.adapter:
+                    t=self.adapter.t;now=time.monotonic()
+                    if t.armed or abs(t.position[2])>.15 or now-t.heartbeat_at>1 or now-t.position_at>.5:
+                        raise ValueError('需新鲜遥测确认已落地停桨，不能释放不明状态资源')
+                elif cmd=='cancel_task':raise ValueError('请先连接并确认已落地')
+                if cmd=='cancel_task' and (self.phase!='READY' or self.started):raise ValueError('仅未起飞且未解锁的准备任务可以取消')
+                task_id=data.get('run_id') or self.run_id
+                result=self.business.release(task_id,cmd=='recover_task',data.get('note',''))
+                if task_id==self.run_id:
+                    self.task=None;self.order_id=None;self.route=[];self.index=0;self.pending_arm=False;self.phase='CONNECTED' if self.adapter else 'DISCONNECTED';self.reason=result['reason']
+                self.event(cmd.upper(),{'task':task_id});return {'ok':True,'reason':result['reason']}
+
             if cmd=='release':
                 if self.lease==owner:self.lease=None
                 return {'released':True}
             if cmd=='connect':
+                if self.task:raise ValueError('有关联业务任务，先完成或取消/核对恢复，再切换连接')
                 if self.adapter and self.adapter.t.armed:raise ValueError('飞行中禁止切换连接')
-                endpoint=data.get('endpoint','udpout:127.0.0.1:18651')
+                endpoint=data.get('endpoint','udpout:127.0.0.1:18751')
                 # Only this explicitly owned simulator endpoint gets simulation command privilege.
-                is_simulation=endpoint=='udpout:127.0.0.1:18651'
+                is_simulation=endpoint=='udpout:127.0.0.1:18751'
                 cfg=json.loads((self.root/'config/project.json').read_text(encoding='utf-8'));offset=[0.,0.,0.] if is_simulation else cfg.get('external_position_offset_neu',[0.,0.,0.])
                 if not finite_vector(offset):raise ValueError('external_position_offset_neu必须为三个有限数值')
                 new_adapter=MAVLinkAdapter(endpoint,int(data.get('baud',115200)),offset)
@@ -57,19 +80,50 @@ class FlightEngine:
             if cmd=='load':
                 self.check_lease(owner);self.require_write()
                 if self.adapter.t.armed:raise ValueError('请先降落，禁止在空中替换任务')
-                self.s=scene(data.get('scenario','neighborhood'),int(data.get('seed',42)));self.s['clearance']=4.
-                if 'goal' in data:
-                    if not finite_vector(data['goal']) or not 0<=data['goal'][2]<=35:raise ValueError('目标坐标无效')
-                    self.s['goal']=data['goal']
-                self.s['cruise_altitude']=max(12.,self.s['goal'][2]);self.s['goal']=[*self.s['goal'][:2],0.]
-                self.route=astar(self.s['home'],self.s['goal'],self.s,altitude=self.s['cruise_altitude']);self.index=1;self.controller.reset();self.returning=False;self.delivery_at=None;self.delivery_status='PENDING';self.delivery_release_at=None;self.delivered=False;self.finished=None;self.started=None;self.fault=None;self.manual=False;self.pending_arm=False;self.trace=[];self.stats.update(guard_interventions=0,replans=0);self.order_id=data.get('order_id');self.phase='READY';self.run_id=uuid.uuid4().hex[:10];self.monitor=ResidualMonitor();self.tracker=Tracker()
-                if self.simulation:self.adapter.command(31000,list(SCENARIOS).index(self.s['id']),self.s['seed'],*self.s['goal'])
-                self.reason='任务已载入，等待飞前检查和解锁';self.event('MISSION_LOADED',{'scenario':self.s['id'],'route':self.route,'order':self.order_id});return {'route':self.route,'energy':energy_budget(self.route)}
+                now=time.monotonic()
+                if now-self.adapter.t.heartbeat_at>1 or now-self.adapter.t.position_at>.5 or abs(self.adapter.t.position[2])>.15:
+                    raise ValueError('请等待新鲜心跳与定位确认地面状态后载入')
+                if self.task:
+                    if data.get('order_id')==self.order_id:
+                        return {'route':self.route,'run_id':self.run_id,'reason':'该订单已载入，保留当前任务与库存，不重复创建','duplicate':True}
+                    raise ValueError('当前订单任务尚未结束，先取消准备任务或处理异常')
+                run_id=uuid.uuid4().hex[:10];task=None
+                if data.get('order_id'):
+                    if not self.simulation:raise ValueError('业务订单闭环当前仅在模拟飞控验证')
+                    if not self.business:raise ValueError('业务联动未启用')
+                    task=self.business.reserve(data['order_id'],run_id,int(data.get('seed',42)))
+                    candidate=task['plan']['selected'];new_scene=candidate['scene'];new_route=candidate['route']
+                else:
+                    new_scene=scene(data.get('scenario','neighborhood'),int(data.get('seed',42)));new_scene['clearance']=4.
+                    if 'goal' in data:
+                        if not finite_vector(data['goal']) or not 0<=data['goal'][2]<=35:raise ValueError('目标坐标无效')
+                        new_scene['goal']=data['goal']
+                    new_scene['cruise_altitude']=max(12.,new_scene['goal'][2]);new_scene['goal']=[*new_scene['goal'][:2],0.]
+                    new_route=astar(new_scene['home'],new_scene['goal'],new_scene,altitude=new_scene['cruise_altitude'])
+                # Install only after all planning succeeds, leaving the old scene intact on rejection.
+                self.s=new_scene;self.route=new_route;self.task=task;self.index=1;self.controller.reset();self.returning=False;self.delivery_at=None;self.delivery_status='PENDING';self.delivery_release_at=None;self.delivered=False;self.finished=None;self.started=None;self.fault=None;self.manual=False;self.pending_arm=False;self.trace=[];self.stats.update(guard_interventions=0,replans=0);self.order_id=data.get('order_id');self.phase='READY';self.run_id=run_id;self.monitor=ResidualMonitor();self.tracker=Tracker()
+                if self.simulation:
+                    self.scene_requested_at=time.monotonic()
+                    try:
+                        self.adapter.command(31000,list(SCENARIOS).index(self.s['id']),self.s['seed'],*self.s['goal'],*self.s['home'][:2])
+                        if task:self.adapter.command(31003,task['plan']['selected']['battery'])
+                    except Exception:
+                        self.phase='STOPPED';self.fault='SCENE_TRANSPORT_ERROR';self.reason='场景指令发送失败，资源保持待核对';self.sync_business();raise
+                self.reason='任务已载入，等待场景回执及飞前检查';self.event('MISSION_LOADED',{'scenario':self.s['id'],'route':self.route,'order':self.order_id});self.sync_business()
+                return {'route':self.route,'run_id':self.run_id,'energy':energy_budget(self.route),'reason':self.reason,'task':task}
             if cmd in ('hold','land','rtl','manual'):
                 self.require_write() # Protective actions may be requested from either authenticated local UI.
             else:self.check_lease(owner);self.require_write()
             if cmd=='arm':
-                if not self.route or self.phase not in ('READY','COMPLETED'):raise ValueError('先载入任务')
+                if not self.route or self.phase!='READY':raise ValueError('先载入新的准备任务，不能重复执行已完成订单')
+                if self.simulation and hasattr(self,'scene_requested_at'):
+                    ack=next((a for a in reversed(self.adapter.acks) if a['command']==31000 and a['at']>=self.scene_requested_at),None)
+                    if not ack or not ack['accepted'] or distance(self.adapter.t.position,self.s['home'])>.5:
+                        raise ValueError('模拟场景尚未确认或飞机不在起点，请等待遥测回执后重试')
+                    if self.task:
+                        configured=next((a for a in reversed(self.adapter.acks) if a['command']==31003 and a['at']>=self.scene_requested_at),None)
+                        if not configured or not configured['accepted'] or self.adapter.t.battery_at<self.scene_requested_at or abs(self.adapter.t.battery-self.task['plan']['selected']['battery'])>1.1:
+                            raise ValueError('等待模拟飞机电量与已分配机队电量同步确认')
                 ok,reason=self.guard.preflight(self.adapter.t,self.s,time.monotonic())
                 if not ok:raise ValueError('飞前检查未通过：'+reason)
                 budget=energy_budget(self.route)['estimated_wh']*2
@@ -95,6 +149,7 @@ class FlightEngine:
                 if self.adapter.t.armed:raise ValueError('故障复位需先完成降落')
                 reason,_=self.guard.check(self.adapter.t,self.s,time.monotonic())
                 if reason:raise ValueError('故障仍在：'+reason)
+                if self.task:raise ValueError('请先核对关联订单任务的飞机与货物，再恢复资源')
                 self.fault=None;self.route=[];self.index=0;self.phase='CONNECTED';self.reason='保护已复位，请重新载入任务';self.event('FAULT_RESET')
             elif cmd=='inject':
                 if not self.simulation:raise ValueError('故障注入仅对本机模拟飞控开放')
@@ -105,7 +160,15 @@ class FlightEngine:
                 if self.adapter.t.armed:raise ValueError('上传任务前需落地')
                 result=self.adapter.upload_mission(data.get('items',[]));self.event('MISSION_UPLOAD',result);return result
             else:raise ValueError('未知命令')
+            self.sync_business()
             return {'ok':True,'phase':self.phase,'reason':self.reason}
+    def sync_business(self):
+        if self.business and self.order_id:
+            self.business.sync({'run_id':self.run_id,'order_id':self.order_id,'phase':self.phase,
+                                'reason':self.reason,'delivered':self.delivered,'fault':self.fault,
+                                'lease':self.lease if time.monotonic()-self.lease_at<20 else None,
+                                'telemetry':self.adapter.t.dump() if self.adapter else None})
+            if self.phase=='COMPLETED':self.task=None
     def begin_return(self):
         self.route=astar(self.adapter.t.position,self.s['home'],self.s,altitude=self.s.get('cruise_altitude'));self.index=1;self.returning=True;self.phase='RETURNING';self.reason='自主返航，保留电量余量';self.controller.reset();self.event('RTL')
     def delivery_step(self,t,now):
@@ -215,11 +278,16 @@ class FlightEngine:
         with self.lock:
             t=self.adapter.t if self.adapter else None
             ages={'heartbeat':round(max(0,now-t.heartbeat_at),2),'position':round(max(0,now-t.position_at),2),'sensor':round(max(0,now-t.sensor_at),2)} if t else {}
-            return {'name':'晴空邻里','phase':self.phase,'reason':self.reason,'simulation':self.simulation,'telemetry':t.dump() if t else None,'ages':ages,'scenario':self.s,'route':self.route,'waypoint':self.index,'returning':self.returning,'delivered':self.delivered,'delivery':{'status':getattr(self,'delivery_status','PENDING'),'label':DELIVERY_TEXT.get(getattr(self,'delivery_status','PENDING'),'等待到达'),'mode':'landed_release','height_m':0,'simulation':self.simulation},'fault':self.fault,'lease':self.lease if now-self.lease_at<20 else None,'stats':self.stats,'events':[e for e in self.events if e.get('run_id')==self.run_id][:25],'acks':self.adapter.acks[-12:] if self.adapter else [],'pending':list(self.adapter.pending) if self.adapter else [],'traffic':{'received':self.adapter.received,'sent':self.adapter.sent} if self.adapter else {},'tracks':list(self.tracker.tracks.values()),'anomaly':self.model_score,'edge':offload(cloud=self.cloud),'critical_compute':offload(priority=3,cloud=self.cloud,deadline_ms=70),'audit':{'flight_head':self.audit.head,'flight_count':self.audit.count,'edge_head':self.edge.head,'verified':AuditChain.verify(self.audit.path)},'trace':self.trace[-300:],'run_id':self.run_id,'started':self.started,'finished':self.finished,'energy':energy_budget(self.route) if self.route else {},'order_id':self.order_id,'real_control':'只读' if not getattr(self,'live_confirmed',False) else '已在本机确认'}
+            return {'name':'晴空邻里','phase':self.phase,'reason':self.reason,'simulation':self.simulation,'telemetry':t.dump() if t else None,'ages':ages,'scenario':self.s,'route':self.route,'waypoint':self.index,'returning':self.returning,'delivered':self.delivered,'delivery':{'status':getattr(self,'delivery_status','PENDING'),'label':DELIVERY_TEXT.get(getattr(self,'delivery_status','PENDING'),'等待到达'),'mode':'landed_release','height_m':0,'simulation':self.simulation},'fault':self.fault,'lease':self.lease if now-self.lease_at<20 else None,'stats':self.stats,'events':[e for e in self.events if e.get('run_id')==self.run_id][:25],'acks':self.adapter.acks[-12:] if self.adapter else [],'pending':list(self.adapter.pending) if self.adapter else [],'traffic':{'received':self.adapter.received,'sent':self.adapter.sent} if self.adapter else {},'tracks':list(self.tracker.tracks.values()),'anomaly':self.model_score,'edge':offload(cloud=self.cloud),'critical_compute':offload(priority=3,cloud=self.cloud,deadline_ms=70),'audit':{'flight_head':self.audit.head,'flight_count':self.audit.count,'edge_head':self.edge.head,'verified':AuditChain.verify(self.audit.path)},'trace':self.trace[-300:],'run_id':self.run_id,'started':self.started,'finished':self.finished,'energy':energy_budget(self.route) if self.route else {},'order_id':self.order_id,'business_task':self.task,'real_control':'只读' if not getattr(self,'live_confirmed',False) else '已在本机确认'}
     def loop(self):
         while self.running:
             start=time.monotonic()
-            try:self.tick(start)
+            try:
+                # Planning can hold the lock; timestamp received ACKs after it
+                # releases, otherwise a new ACK can appear older than its request.
+                with self.lock:
+                    self.tick(time.monotonic())
+                    self.sync_business()
             except Exception as e:
                 with self.lock:
                     self.reason='控制循环异常：'+str(e);self.fault='LOOP_ERROR';self.phase='HOLD'

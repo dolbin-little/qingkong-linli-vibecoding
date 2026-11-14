@@ -110,17 +110,17 @@ def advance(state, minutes):
 
 def metrics(state):
     delivered = [o for o in state['orders'] if o.get('kind') != 'return' and o.get('delivered_at') is not None]
-    times = [o['delivered_at'] - o['created'] for o in delivered]
+    times = [o.get('flight_elapsed_minutes', o['delivered_at'] - o['created']) for o in delivered]
     flights = [f for f in state['flights'] if f['done']]
     energy = sum(f['energy_wh'] for f in flights)
     # Explicit illustrative unit economics; not a real cost assertion.
     cost = len(flights)*1.1 + energy/1000*.65 + sum(f['duration_min'] for f in flights)*.08
     return {'orders': len([o for o in state['orders'] if o.get('kind') != 'return']), 'delivered': len(delivered),
             'pending': sum(o['status'] == 'pending' for o in state['orders']),
-            'flying': sum(d['status'] == 'flying' for d in state['drones']),
+            'flying': sum(d['status'] in ('flying','flight_active') for d in state['drones']),
             'available': sum(d['status'] == 'idle' for d in state['drones']),
             'avg_minutes': round(sum(times)/len(times), 2) if times else None,
-            'on_time_pct': round(sum(o['delivered_at'] <= o['deadline'] for o in delivered)/len(delivered)*100, 1) if delivered else None,
+            'on_time_pct': round(sum(o.get('flight_elapsed_minutes', o['delivered_at']-o['created']) <= o['deadline']-o['created'] for o in delivered)/len(delivered)*100, 1) if delivered else None,
             'energy_wh': round(energy, 2), 'distance_km': round(sum(f['distance_m'] for f in flights)/1000, 2),
             'solar_wh': round(sum(x['pv_wh'] for x in state['energy_log']), 2),
             'cost_per_order': round(cost / sum(len(f['orders']) for f in flights), 2) if flights else None}

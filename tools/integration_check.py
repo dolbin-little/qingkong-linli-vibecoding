@@ -22,9 +22,9 @@ def prep(goal=[24.,16.,6.],scenario='neighborhood'):
 def finish():return wait(lambda s:s['phase'] in ('STOPPED','COMPLETED') and not s['telemetry']['armed'],140)
 def main():
     try:
-        urllib.request.urlopen('http://127.0.0.1:18952/state');record('worker denies anonymous',False)
+        urllib.request.urlopen('http://127.0.0.1:19052/state');record('worker denies anonymous',False)
     except urllib.error.HTTPError as e:record('worker denies anonymous',e.code==401,status=e.code)
-    req=urllib.request.Request('http://127.0.0.1:18952/command',data=b'{"command":"lease"}',headers={'X-Sky-Key':key(),'Origin':'http://evil.test','Content-Type':'application/json'})
+    req=urllib.request.Request('http://127.0.0.1:19052/command',data=b'{"command":"lease"}',headers={'X-Sky-Key':key(),'Origin':'http://evil.test','Content-Type':'application/json'})
     try:urllib.request.urlopen(req);record('worker rejects browser Origin',False)
     except urllib.error.HTTPError as e:record('worker rejects browser Origin',e.code==403,status=e.code)
     cmd('lease')

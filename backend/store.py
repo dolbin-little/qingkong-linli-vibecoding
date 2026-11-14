@@ -11,7 +11,7 @@ from backend.planner import DEFAULT_ZONES, PRODUCTS
 from backend.pickup import PICKUP_POINTS
 
 ROOT = Path(__file__).resolve().parents[1]
-DB_PATH = Path(os.environ.get('GREENFLIGHT_DB', ROOT / 'data' / 'greenflight.db'))
+DB_PATH = Path(os.environ.get('GREENFLIGHT_DB', ROOT / 'data' / 'community.db'))
 LOCK = threading.RLock()
 
 def connect():

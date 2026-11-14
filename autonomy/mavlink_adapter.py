@@ -21,7 +21,7 @@ class EphemeralUDP(mavutil.mavfile):
     def close(self):self.port.close()
 
 class MAVLinkAdapter:
-    def __init__(self,endpoint='udpout:127.0.0.1:18651',baud=115200,position_offset=None):
+    def __init__(self,endpoint='udpout:127.0.0.1:18751',baud=115200,position_offset=None):
         if not isinstance(endpoint,str) or len(endpoint)>180:raise ValueError('连接地址无效')
         self.endpoint=endpoint;self.position_offset=position_offset or [0.,0.,0.];self.streams_requested=False;self.link=EphemeralUDP(endpoint) if endpoint.startswith('udpout:') else mavutil.mavlink_connection(endpoint,baud=baud,source_system=245,source_component=190,dialect='ardupilotmega');self.t=Telemetry();self.last_gcs=0.;self.acks=[];self.pending={};self.autopilot=None;self.sys=1;self.comp=1;self.received=0;self.sent=0;self.armed_confirmed=False;self.observation={};self.detection=None
     def close(self):self.link.close()
@@ -36,7 +36,7 @@ class MAVLinkAdapter:
             if kind=='HEARTBEAT' and m.type!=mavutil.mavlink.MAV_TYPE_GCS:
                 if self.autopilot is not None and (m.get_srcSystem()!=self.sys or m.get_srcComponent()!=self.comp):continue
                 self.sys=m.get_srcSystem();self.comp=m.get_srcComponent();self.autopilot=m.autopilot;self.t.heartbeat_at=now;self.t.armed=bool(m.base_mode & mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED);self.t.mode=mavutil.mode_string_v10(m);self.armed_confirmed=self.t.armed
-                if not self.streams_requested and self.endpoint!='udpout:127.0.0.1:18651':
+                if not self.streams_requested and self.endpoint!='udpout:127.0.0.1:18751':
                     # Negotiate telemetry rates only; this never arms or enables motion.
                     for msg,interval in [(0,500000),(1,500000),(24,500000),(32,50000),(132,100000),(30,100000)]:self.command(511,msg,interval)
                     self.streams_requested=True
@@ -48,7 +48,7 @@ class MAVLinkAdapter:
             elif kind=='DISTANCE_SENSOR':
                 if m.orientation in (0,1,2,3,4,5,6,7) and m.min_distance<=m.current_distance<=m.max_distance:self.t.nearest=m.current_distance/100.;self.t.sensor_at=now
             elif kind=='ATTITUDE':self.t.yaw=m.yaw
-            elif kind=='NAMED_VALUE_FLOAT' and self.endpoint=='udpout:127.0.0.1:18651':
+            elif kind=='NAMED_VALUE_FLOAT' and self.endpoint=='udpout:127.0.0.1:18751':
                 name=m.name.decode() if isinstance(m.name,bytes) else m.name
                 if name=='PAYLOAD':self.payload_feedback={'released':m.value==1.,'at':now}
                 if name in ('DYN_N','DYN_E','DYN_U') and math.isfinite(m.value):
@@ -71,7 +71,7 @@ class MAVLinkAdapter:
         self.command(mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,0)
     def land(self):self.command(mavutil.mavlink.MAV_CMD_NAV_LAND)
     def release_payload(self):
-        if self.endpoint!='udpout:127.0.0.1:18651':raise ValueError('真实投放机构尚未适配，禁止发送模拟机构命令')
+        if self.endpoint!='udpout:127.0.0.1:18751':raise ValueError('真实投放机构尚未适配，禁止发送模拟机构命令')
         self.command(31002)
     def rtl(self):self.command(mavutil.mavlink.MAV_CMD_NAV_RETURN_TO_LAUNCH)
     def velocity(self,v):

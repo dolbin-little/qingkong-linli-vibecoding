@@ -11,6 +11,9 @@ class Plant:
         # Simulated latch, not a command for a real commercial payload mechanism.
         if self.armed or self.p[2]>.15 or norm(self.v)>.2 or distance(self.p,[*self.s['goal'][:2],0.])>1 or self.injected=='payload':return False
         self.payload_released=True;return True
+    def configure_battery(self,value):
+        if self.armed or self.p[2]>.15 or not math.isfinite(value) or not 0<=value<=100:return False
+        self.battery=float(value);self.initial=float(value);return True
     def obstacle(self):
         if self.s['id']!='crossing':return None
         return {'id':'DYN1','position':[48.+12*math.sin(self.age*.13),50.,12.],'radius':2.}
@@ -29,8 +32,8 @@ class Plant:
         if self.age-self.last_command>3. and self.p[2]>.1:self.mode=9
         if self.mode==9:target=[0.,0.,-.8]
         if self.mode==6:
-            h=math.hypot(self.p[0]-10,self.p[1]-10)
-            target=[max(-2,min(2,10-self.p[0])),max(-2,min(2,10-self.p[1])),(-.8 if h<1 else max(-1,min(1,12-self.p[2])))]
+            h=math.hypot(self.p[0]-self.s['home'][0],self.p[1]-self.s['home'][1])
+            target=[max(-2,min(2,self.s['home'][0]-self.p[0])),max(-2,min(2,self.s['home'][1]-self.p[1])),(-.8 if h<1 else max(-1,min(1,12-self.p[2])))]
         old=self.p[:]
         for i in range(3):
             desired=target[i]+(self.s['wind'][i]*.08 if self.p[2]>.2 or target[2]>.2 else 0.)
@@ -40,7 +43,7 @@ class Plant:
         metres=distance(old,self.p);self.distance+=metres;wh=(240+15*norm(self.v))*dt/3600;self.energy_wh+=wh;self.battery=max(0,self.battery-wh/180*100)
         if self.nearest()<.45 and self.p[2]>.5:self.collision=True
 
-def run(port=18651,rate=1.):
+def run(port=18751,rate=1.):
     link=mavutil.mavlink_connection('udpin:127.0.0.1:'+str(port),source_system=1,source_component=1,dialect='ardupilotmega',udp_timeout=2)
     plant=Plant(scene());last=time.monotonic();ticks=0;mission={};mission_count=0;peer=False
     while True:
@@ -67,7 +70,10 @@ def run(port=18651,rate=1.):
                     else:
                         names=list(__import__('autonomy.models',fromlist=['SCENARIOS']).SCENARIOS);idx=int(m.param1);plant.reset(scene(names[idx] if 0<=idx<len(names) else 'neighborhood',int(m.param2)))
                         if 1<=m.param3<=99 and 1<=m.param4<=79:plant.s['goal']=[m.param3,m.param4,0.]
+                        if 1<=m.param6<=99 and 1<=m.param7<=79:
+                            plant.s['home']=[m.param6,m.param7,0.];plant.p=plant.s['home'][:]
                 elif cmd==31002:ok=0 if plant.release_payload() else 4
+                elif cmd==31003:ok=0 if plant.configure_battery(m.param1) else 4
                 elif cmd==31001:
                     names={0:None,1:'sensor',2:'link',3:'gps',4:'battery',5:'ack_loss',6:'payload'};plant.injected=names.get(int(m.param1));
                     if plant.injected=='battery':plant.battery=22.
@@ -104,4 +110,4 @@ def run(port=18651,rate=1.):
         time.sleep(max(.005,.05-(time.monotonic()-now)))
 
 if __name__=='__main__':
-    a=argparse.ArgumentParser();a.add_argument('--port',type=int,default=18651);a.add_argument('--rate',type=float,default=1.);args=a.parse_args();run(args.port,args.rate)
+    a=argparse.ArgumentParser();a.add_argument('--port',type=int,default=18751);a.add_argument('--rate',type=float,default=1.);args=a.parse_args();run(args.port,args.rate)

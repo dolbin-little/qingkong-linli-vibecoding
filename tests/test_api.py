@@ -34,6 +34,19 @@ def test_cancel_pending_is_idempotent_guard(client):
     state=client.get('/api/state').json()
     assert next(o for o in state['orders'] if o['id']==oid)['payment']=='simulated_refunded'
 
+
+def test_flight_reservation_protects_business_resources(client):
+    from backend.flight_orders import FlightOrders
+    task=FlightOrders().reserve('LH-DEMO-001','api-guard-run')
+    assert client.post('/api/orders/LH-DEMO-001/cancel').status_code==409
+    assert client.patch('/api/drones/'+task['drone_id'],json={'status':'idle'}).status_code==409
+    assert client.patch('/api/stations/'+task['station_id'],json={'online':False}).status_code==409
+    assert client.post('/api/reset',json={'confirmation':'RESET_DEMO'}).status_code==409
+    assert client.post('/api/weather',json={'irradiance':100,'wind':2,'rain':0}).status_code==409
+    client.post('/api/logout')
+    client.post('/api/login',json={'username':'resident','password':'GreenFlight2026!'})
+    assert client.get('/api/state').json()['flight_tasks']==[]
+
 def test_delivery_return_settlement_inventory_roundtrip(client):
     # Deliver initial seed orders. Return one shared item to its original stock location.
     result=client.post('/api/dispatch',json={'method':'vns'}).json()

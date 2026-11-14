@@ -10,7 +10,7 @@ from autonomy.models import SCENARIOS
 from autonomy.engine import ROOT
 
 app.title='晴空邻里 · 自主飞行与未来城市共享服务'
-app.version='2.1.0'
+app.version='3.0.0'
 
 class FlightCommand(BaseModel):
     command:str=Field(min_length=1,max_length=40)
@@ -32,12 +32,6 @@ async def flight_command(body:FlightCommand,u=Depends(admin)):
     if body.command in ('confirm_real','jog','upload'):raise HTTPException(403,'该操作仅在本机独立桌面软件提供')
     try:
         data=dict(body.data)
-        if body.command=='load' and data.get('order_id'):
-            state=store.read_state();order=next((o for o in state['orders'] if o['id']==data['order_id']),None)
-            if not order:raise ValueError('订单不存在')
-            # Separate small flight test field; never interpret community metres as geodetic coordinates.
-            data['goal']=[10+order['x']/1000*75,10+order['y']/700*55,12.]
-            data['scenario']='neighborhood'
         return await asyncio.to_thread(rpc,'/command',{'command':body.command,'data':data,'owner':'web'},8)
     except Exception as e:raise HTTPException(409,str(e))
 
@@ -59,3 +53,8 @@ def reports(u=Depends(admin)):
             try:result.append({'file':p.name,'data':json.loads(p.read_text(encoding='utf-8'))})
             except ValueError:pass
     return result[:50]
+
+@app.get('/api/autonomy/tasks')
+async def flight_tasks(u=Depends(admin)):
+    try:return await asyncio.to_thread(rpc,'/command',{'command':'tasks','data':{},'owner':'web'},8)
+    except Exception as e:raise HTTPException(503,str(e))

@@ -3,7 +3,7 @@ import sys,json,time,subprocess,os
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 import httpx
 from autonomy.client import rpc
-R=Path(__file__).resolve().parents[1];checks=[];BASE='http://127.0.0.1:18951'
+R=Path(__file__).resolve().parents[1];checks=[];BASE='http://127.0.0.1:19051'
 def record(name,ok,detail=None):checks.append({'test':name,'passed':bool(ok),'detail':detail});print(name,bool(ok),flush=True)
 with httpx.Client(base_url=BASE,timeout=10) as c:
     record('autonomy requires login',c.get('/api/autonomy/state').status_code==401)

@@ -2,7 +2,7 @@ import urllib.request,urllib.error,json
 from .worker import key
 
 def rpc(path='/state',body=None,timeout=3):
-    req=urllib.request.Request('http://127.0.0.1:18952'+path,data=json.dumps(body).encode() if body is not None else None,headers={'X-Sky-Key':key(),'Content-Type':'application/json'})
+    req=urllib.request.Request('http://127.0.0.1:19052'+path,data=json.dumps(body).encode() if body is not None else None,headers={'X-Sky-Key':key(),'Content-Type':'application/json'})
     try:
         with urllib.request.urlopen(req,timeout=timeout) as r:return json.load(r)
     except urllib.error.HTTPError as e:
