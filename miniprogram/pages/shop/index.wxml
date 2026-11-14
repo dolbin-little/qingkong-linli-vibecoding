@@ -1,0 +1,22 @@
+<view class="page">
+  <view class="eyebrow">社区即时服务</view>
+  <view class="row"><view class="title">需要的，即刻到。</view><button size="mini" bindtap="orders">我的订单</button></view>
+  <view class="notice">配送费 ¥1.50。当前为模拟环境，不产生真实扣款。</view>
+  <view class="card" wx:for="{{products}}" wx:key="id">
+    <view class="row"><view>{{item.name}}</view><view class="price">¥{{item.price}}</view></view>
+    <view class="muted">{{item.unit}} · 可用 {{item.stock}} 件 · {{item.weight}} kg</view>
+    <button class="primary" data-id="{{item.id}}" bindtap="choose">选择配送</button>
+  </view>
+  <view class="card" wx:if="{{selected}}">
+    <view>{{selected.name}} · 下单</view>
+    <view class="label">配送数量（1 至 3 件）</view>
+    <input type="number" value="{{quantity}}" bindinput="input" placeholder="数量" />
+    <view class="label">公共取件点</view>
+    <picker mode="selector" range="{{pickupPoints}}" range-key="label" value="{{pickupIndex}}" bindchange="choosePickup" disabled="{{busy || !pickupPoints.length}}">
+      <view>{{pickupName || '请选择附近公共取件点'}} ▾</view>
+    </picker>
+    <view class="muted">地址与位置自动关联，无需填写坐标。其他位置可在网页端下单地图中选择。</view>
+    <button class="primary" bindtap="submit" loading="{{busy}}" disabled="{{busy || !pickupId}}">确认模拟支付并下单</button>
+  </view>
+  <view class="error">{{error}}</view>
+</view>

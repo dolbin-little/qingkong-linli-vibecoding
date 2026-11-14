@@ -1,0 +1,69 @@
+﻿晴空邻里系统架构与模块说明
+
+网页(FastAPI+HTML/CSS/JavaScript+Three.js)
+       ↓ 管理员会话、同源校验、命令网关
+独立飞行服务(Python/ThreadingHTTPServer，127.0.0.1:18952，20Hz外环)
+       ↑ Tkinter桌面软件：与网页共用操控权租约，关闭网页仍能运行
+       ↓ MAVLink UDP/串口；遥测上行、指令及ACK下行
+模拟飞控(独立进程) 或 外部ArduCopter接口(默认只读)
+
+一、模块
+sky_platform.py：复用原社区FastAPI后端，增加管理员飞行接口、报告和技术来源。
+frontend/sky.*：新任务舱与研究页面；sky-scene.mjs用遥测驱动已有精细产品几何。
+desktop/console.py：Windows独立GUI，异步RPC、遥测、地图、接管、全球航点上传。
+autonomy/worker.py：独立控制服务，随机本机密钥、请求体限制、拒绝浏览器跨源直连。
+autonomy/engine.py：任务状态机、租约、航点跟踪、返航、保护、完成记录。
+autonomy/mavlink_adapter.py：标准消息、目标系统锁定、NEU/NED转换、ACK和任务上传。
+autonomy/simulator.py：独立一阶动力学、速度滞后、加速度限幅、风扰、电池与看门狗。
+autonomy/planning.py：2.5D A*，0.5米采样逐段净空复核，位置P/速度反馈及加速度限幅。
+autonomy/perception.py：输入原子校验、α–β跟踪、目标失效剔除、相对运动最近距离。
+autonomy/safety.py：独立保护，不依赖残差统计分数或云端结果。
+autonomy/research.py：优先级时限成本枚举、稳健残差线索、SHA-256事件链和检查点。
+backend/*：保留原订单、库存、VNS–MILP调度、DQN候选排序及光储充LSTM/MPC研究。
+
+二、坐标与数据边界
+社区业务图为1000×700米，飞行测试场为100×80米，高度上限35米。
+原业务订单经归一化成为研究目标点，仍须通过新地图净空检查；落在建筑缓冲区会拒绝。
+飞行内部坐标[N,E,U]；Three场景[x,y,z]=[N,U,E]；MAVLink为[N,E,D]。
+速度指令只使用LOCAL_NED的vx/vy/vz，type_mask=0x0DC7。
+位置偏移只用于经标定的外部局部原点映射；地理经纬度上传与局部自主控制相互独立。
+
+三、状态机
+DISCONNECTED→CONNECTING→CONNECTED→READY→ARMING→ARMED→EXECUTING。
+交付点下降→DELIVERY_LANDING→DELIVERY_RELEASING→DEPARTURE_ARMING→RETURNING→LANDING→COMPLETED。
+异常保护进入HOLD、RETURNING或LANDING；未完成配送的落地记STOPPED，保留原因。
+模式/解锁确认超过5秒会取消待解锁流程；保护悬停也会取消排队中的解锁请求。
+来自飞控的意外解除电机会终止活动任务，不继续假装执行。
+租约过期禁止新的主动操作，但不终止已在运行的自主任务。
+软件并非硬实时系统，20Hz是目标频率，真实周期与最坏周期保存在运行统计中。
+
+四、安全监控
+心跳>2秒请求LAND；局部位置>.8秒、水平测距>1秒先HOLD；GPS>2秒、电量>3秒陈旧也保护。
+GPS等级不足、临界电量<=15%请求降落；电量<=25%请求返航；起飞电量必须>=45%。
+已返航时允许在保留电量保护下继续返航指令，<=15%仍优先降落。
+围栏、建筑缓冲、速度/停止距离和下一步走廊会独立复核。
+保护悬停持续2.5秒未解除后转受控降落。
+真实机上的LAND/RTL执行仍取决于飞控、传感器、场地与通信。
+
+五、感知来源
+模拟器的DISTANCE_SENSOR来自合成几何；动态物体通过DYN_N/E/U NAMED_VALUE_FLOAT发送
+带噪位置样本，这是本模拟器扩展，不是通用无人机目标检测协议。
+引擎只消费测量/检测输入，不读取data/simulator-truth.json进行规划。
+truth文件仅供评价器判定碰撞、里程、能耗；与感知数据明确分离。
+外部检测接口：POST本机18952/command，X-Sky-Key取自config/local-control.key。
+示例JSON：{"command":"detections","owner":"desktop","data":{"detections":[
+{"id":"target1","position":[40,30,12],"radius":2}]}}
+输入坐标必须在与飞行场景相同的NEU参考系中；当前没有相机/雷达标定适配器。
+跟踪预测风险触发动态A*绕行；无可行路径则保护悬停，不能保证任意动态障碍都可绕过。
+
+六、记录
+logs/flight-chain.jsonl：飞行事件哈希链；edge-checkpoints.jsonl：关键检查点。
+logs/trace-*.jsonl：逐次记录任务轨迹；reports/flight-*.json：完成/终止快照与至多约600秒轨迹。
+网页实时导出为近60秒快照；长任务完整轨迹以JSONL为准。
+单机管理员可以同时改写链和检查点，本地哈希链不能抵抗这一攻击，不宣称分布式不可篡改。
+
+
+【当前实际部署位置】
+独立飞行服务与速度外环当前运行在Windows本机地面站，不是已部署机载伴随计算机。
+无人机原飞控负责姿态与电机内环；本机外环仍依赖电脑及通信链路。
+云边页面的机载/边缘/云端是候选成本模型，关键任务的机载限定是研究策略，不表示已经完成三地部署。

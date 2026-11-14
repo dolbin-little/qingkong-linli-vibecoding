@@ -1,0 +1,1132 @@
+{
+  "clock": 0.0,
+  "revision": 0,
+  "running": false,
+  "speed": 6,
+  "cloud_online": true,
+  "weather": {
+    "label": "晴间多云",
+    "irradiance": 720.0,
+    "wind": 2.4,
+    "rain": 0.0,
+    "temperature": 23
+  },
+  "stations": [
+    {
+      "id": "S01",
+      "name": "银杏苑共享站",
+      "x": 160,
+      "y": 170,
+      "area": "校园北区",
+      "online": true,
+      "inventory": {
+        "powerbank": 11,
+        "umbrella": 9,
+        "water": 24,
+        "firstaid": 6
+      },
+      "pv_area": 3.0,
+      "chargers": 2,
+      "storage_wh": 650.0,
+      "storage_capacity_wh": 1000.0
+    },
+    {
+      "id": "S02",
+      "name": "云大生活服务站",
+      "x": 800,
+      "y": 160,
+      "area": "校园东区",
+      "online": true,
+      "inventory": {
+        "powerbank": 12,
+        "umbrella": 9,
+        "water": 24,
+        "firstaid": 6
+      },
+      "pv_area": 3.0,
+      "chargers": 2,
+      "storage_wh": 650.0,
+      "storage_capacity_wh": 1000.0
+    },
+    {
+      "id": "S03",
+      "name": "青禾社区站",
+      "x": 150,
+      "y": 580,
+      "area": "社区南区",
+      "online": true,
+      "inventory": {
+        "powerbank": 12,
+        "umbrella": 10,
+        "water": 24,
+        "firstaid": 6
+      },
+      "pv_area": 3.0,
+      "chargers": 2,
+      "storage_wh": 650.0,
+      "storage_capacity_wh": 1000.0
+    },
+    {
+      "id": "S04",
+      "name": "邻里便利店",
+      "x": 825,
+      "y": 580,
+      "area": "社区东区",
+      "online": true,
+      "inventory": {
+        "powerbank": 11,
+        "umbrella": 10,
+        "water": 23,
+        "firstaid": 5
+      },
+      "pv_area": 3.0,
+      "chargers": 2,
+      "storage_wh": 650.0,
+      "storage_capacity_wh": 1000.0
+    }
+  ],
+  "drones": [
+    {
+      "id": "LH-001",
+      "name": "绿航 01",
+      "station_id": "S01",
+      "x": 160,
+      "y": 170,
+      "battery": 92,
+      "capacity_wh": 180.0,
+      "max_payload": 1.8,
+      "status": "flying",
+      "flight_minutes": 0.0,
+      "distance_m": 0.0
+    },
+    {
+      "id": "LH-002",
+      "name": "绿航 02",
+      "station_id": "S01",
+      "x": 160,
+      "y": 170,
+      "battery": 74,
+      "capacity_wh": 180.0,
+      "max_payload": 1.8,
+      "status": "idle",
+      "flight_minutes": 0.0,
+      "distance_m": 0.0
+    },
+    {
+      "id": "LH-003",
+      "name": "绿航 03",
+      "station_id": "S02",
+      "x": 800,
+      "y": 160,
+      "battery": 88,
+      "capacity_wh": 180.0,
+      "max_payload": 1.8,
+      "status": "flying",
+      "flight_minutes": 0.0,
+      "distance_m": 0.0
+    },
+    {
+      "id": "LH-004",
+      "name": "绿航 04",
+      "station_id": "S02",
+      "x": 800,
+      "y": 160,
+      "battery": 61,
+      "capacity_wh": 180.0,
+      "max_payload": 1.8,
+      "status": "idle",
+      "flight_minutes": 0.0,
+      "distance_m": 0.0
+    },
+    {
+      "id": "LH-005",
+      "name": "绿航 05",
+      "station_id": "S03",
+      "x": 150,
+      "y": 580,
+      "battery": 96,
+      "capacity_wh": 180.0,
+      "max_payload": 1.8,
+      "status": "idle",
+      "flight_minutes": 0.0,
+      "distance_m": 0.0
+    },
+    {
+      "id": "LH-006",
+      "name": "绿航 06",
+      "station_id": "S03",
+      "x": 150,
+      "y": 580,
+      "battery": 83,
+      "capacity_wh": 180.0,
+      "max_payload": 1.8,
+      "status": "idle",
+      "flight_minutes": 0.0,
+      "distance_m": 0.0
+    },
+    {
+      "id": "LH-007",
+      "name": "绿航 07",
+      "station_id": "S04",
+      "x": 825,
+      "y": 580,
+      "battery": 72,
+      "capacity_wh": 180.0,
+      "max_payload": 1.8,
+      "status": "flying",
+      "flight_minutes": 0.0,
+      "distance_m": 0.0
+    },
+    {
+      "id": "LH-008",
+      "name": "绿航 08",
+      "station_id": "S04",
+      "x": 825,
+      "y": 580,
+      "battery": 35,
+      "capacity_wh": 180.0,
+      "max_payload": 1.8,
+      "status": "idle",
+      "flight_minutes": 0.0,
+      "distance_m": 0.0
+    }
+  ],
+  "zones": [
+    {
+      "id": "Z01",
+      "name": "教学楼安全缓冲区",
+      "x": 390,
+      "y": 180,
+      "w": 120,
+      "h": 155
+    },
+    {
+      "id": "Z02",
+      "name": "居民楼安全缓冲区",
+      "x": 660,
+      "y": 365,
+      "w": 105,
+      "h": 130
+    },
+    {
+      "id": "Z03",
+      "name": "活动场地临时禁飞区",
+      "x": 220,
+      "y": 460,
+      "w": 130,
+      "h": 80
+    }
+  ],
+  "orders": [
+    {
+      "id": "LH-DEMO-001",
+      "user_id": "resident",
+      "product": "powerbank",
+      "quantity": 1,
+      "x": 285,
+      "y": 230,
+      "address": "银杏苑 2 栋取件点",
+      "pickup_point_id": "P01",
+      "priority": 1,
+      "created": 0.0,
+      "deadline": 6.0,
+      "status": "flying",
+      "kind": "delivery",
+      "payment": "simulated_paid",
+      "amount": 3.5,
+      "station_id": "S01",
+      "drone_id": "LH-001",
+      "delivered_at": null,
+      "returned_at": null,
+      "source": "seed",
+      "events": [
+        {
+          "at": 0,
+          "text": "演示订单已创建，模拟支付完成"
+        },
+        {
+          "at": 0.0,
+          "text": "LH-001 已分配 · VNS 调度 · 含返航电量检查"
+        }
+      ],
+      "eta": 0.449
+    },
+    {
+      "id": "LH-DEMO-002",
+      "user_id": "resident",
+      "product": "umbrella",
+      "quantity": 1,
+      "x": 575,
+      "y": 135,
+      "address": "图书馆东侧",
+      "pickup_point_id": "P02",
+      "priority": 1,
+      "created": 0.0,
+      "deadline": 6.0,
+      "status": "flying",
+      "kind": "delivery",
+      "payment": "simulated_paid",
+      "amount": 3.5,
+      "station_id": "S02",
+      "drone_id": "LH-003",
+      "delivered_at": null,
+      "returned_at": null,
+      "source": "seed",
+      "events": [
+        {
+          "at": 0,
+          "text": "演示订单已创建，模拟支付完成"
+        },
+        {
+          "at": 0.0,
+          "text": "LH-003 已分配 · VNS 调度 · 含返航电量检查"
+        }
+      ],
+      "eta": 0.6066
+    },
+    {
+      "id": "LH-DEMO-003",
+      "user_id": "resident",
+      "product": "water",
+      "quantity": 1,
+      "x": 885,
+      "y": 330,
+      "address": "东区公共取件点",
+      "pickup_point_id": "P03",
+      "priority": 1,
+      "created": 0.0,
+      "deadline": 6.0,
+      "status": "flying",
+      "kind": "delivery",
+      "payment": "simulated_paid",
+      "amount": 3.5,
+      "station_id": "S04",
+      "drone_id": "LH-007",
+      "delivered_at": null,
+      "returned_at": null,
+      "source": "seed",
+      "events": [
+        {
+          "at": 0,
+          "text": "演示订单已创建，模拟支付完成"
+        },
+        {
+          "at": 0.0,
+          "text": "LH-007 已分配 · VNS 调度 · 含返航电量检查"
+        }
+      ],
+      "eta": 0.6617
+    },
+    {
+      "id": "LH-DEMO-004",
+      "user_id": "resident",
+      "product": "firstaid",
+      "quantity": 1,
+      "x": 390,
+      "y": 595,
+      "address": "青禾广场",
+      "pickup_point_id": "P04",
+      "priority": 2,
+      "created": 0.0,
+      "deadline": 6.0,
+      "status": "flying",
+      "kind": "delivery",
+      "payment": "simulated_paid",
+      "amount": 9.5,
+      "station_id": "S04",
+      "drone_id": "LH-007",
+      "delivered_at": null,
+      "returned_at": null,
+      "source": "seed",
+      "events": [
+        {
+          "at": 0,
+          "text": "演示订单已创建，模拟支付完成"
+        },
+        {
+          "at": 0.0,
+          "text": "LH-007 已分配 · VNS 调度 · 含返航电量检查"
+        }
+      ],
+      "eta": 2.1117
+    },
+    {
+      "id": "LH-DEMO-005",
+      "user_id": "resident",
+      "product": "powerbank",
+      "quantity": 1,
+      "x": 580,
+      "y": 445,
+      "address": "社区服务中心",
+      "pickup_point_id": "P05",
+      "priority": 1,
+      "created": 0.0,
+      "deadline": 6.0,
+      "status": "flying",
+      "kind": "delivery",
+      "payment": "simulated_paid",
+      "amount": 3.5,
+      "station_id": "S04",
+      "drone_id": "LH-007",
+      "delivered_at": null,
+      "returned_at": null,
+      "source": "seed",
+      "events": [
+        {
+          "at": 0,
+          "text": "演示订单已创建，模拟支付完成"
+        },
+        {
+          "at": 0.0,
+          "text": "LH-007 已分配 · VNS 调度 · 含返航电量检查"
+        }
+      ],
+      "eta": 1.477
+    },
+    {
+      "id": "LH-DEMO-006",
+      "user_id": "resident",
+      "product": "umbrella",
+      "quantity": 1,
+      "x": 90,
+      "y": 340,
+      "address": "校园西门",
+      "pickup_point_id": "P06",
+      "priority": 1,
+      "created": 0.0,
+      "deadline": 6.0,
+      "status": "flying",
+      "kind": "delivery",
+      "payment": "simulated_paid",
+      "amount": 3.5,
+      "station_id": "S01",
+      "drone_id": "LH-001",
+      "delivered_at": null,
+      "returned_at": null,
+      "source": "seed",
+      "events": [
+        {
+          "at": 0,
+          "text": "演示订单已创建，模拟支付完成"
+        },
+        {
+          "at": 0.0,
+          "text": "LH-001 已分配 · VNS 调度 · 含返航电量检查"
+        }
+      ],
+      "eta": 1.0511
+    }
+  ],
+  "flights": [
+    {
+      "drone_id": "LH-001",
+      "station_id": "S01",
+      "orders": [
+        "LH-DEMO-001",
+        "LH-DEMO-006"
+      ],
+      "legs": [
+        {
+          "from": [
+            160,
+            170
+          ],
+          "to": [
+            285,
+            230
+          ],
+          "path": [
+            [
+              160,
+              170
+            ],
+            [
+              285,
+              230
+            ]
+          ],
+          "start": 0.0,
+          "end": 0.4490198387906259,
+          "energy": 1.1185888151861985,
+          "solar": 0.06454594221453022,
+          "order_id": "LH-DEMO-001"
+        },
+        {
+          "from": [
+            285,
+            230
+          ],
+          "to": [
+            90,
+            340
+          ],
+          "path": [
+            [
+              285,
+              230
+            ],
+            [
+              90,
+              340
+            ]
+          ],
+          "start": 0.4490198387906259,
+          "end": 1.0511141846461955,
+          "energy": 1.646696974582314,
+          "solar": 0.10422285444576362,
+          "order_id": "LH-DEMO-006"
+        },
+        {
+          "from": [
+            90,
+            340
+          ],
+          "to": [
+            160,
+            170
+          ],
+          "path": [
+            [
+              90,
+              340
+            ],
+            [
+              160,
+              170
+            ]
+          ],
+          "start": 1.0511141846461955,
+          "end": 1.581300540803707,
+          "energy": 1.1884947827770906,
+          "solar": 0.08558430351602694,
+          "order_id": null
+        }
+      ],
+      "arrivals": {
+        "LH-DEMO-001": 0.449,
+        "LH-DEMO-006": 1.0511
+      },
+      "distance_m": 546.39,
+      "energy_wh": 4.7538,
+      "solar_wh": 0.2544,
+      "duration_min": 1.5813,
+      "score": 0.37906915685665815,
+      "solver": "HiGHS MILP",
+      "solver_optimal": true,
+      "started": 0.0,
+      "initial_battery": 92,
+      "done": false,
+      "id": "F0-LH-001"
+    },
+    {
+      "drone_id": "LH-003",
+      "station_id": "S02",
+      "orders": [
+        "LH-DEMO-002"
+      ],
+      "legs": [
+        {
+          "from": [
+            800,
+            160
+          ],
+          "to": [
+            575,
+            135
+          ],
+          "path": [
+            [
+              800,
+              160
+            ],
+            [
+              575,
+              135
+            ]
+          ],
+          "start": 0.0,
+          "end": 0.6065815884580379,
+          "energy": 1.665073579212202,
+          "solar": 0.10538594772832338,
+          "order_id": "LH-DEMO-002"
+        },
+        {
+          "from": [
+            575,
+            135
+          ],
+          "to": [
+            800,
+            160
+          ],
+          "path": [
+            [
+              575,
+              135
+            ],
+            [
+              800,
+              160
+            ]
+          ],
+          "start": 0.6065815884580379,
+          "end": 1.2131631769160758,
+          "energy": 1.463476874935092,
+          "solar": 0.10538594772832338,
+          "order_id": null
+        }
+      ],
+      "arrivals": {
+        "LH-DEMO-002": 0.6066
+      },
+      "distance_m": 452.77,
+      "energy_wh": 3.9286,
+      "solar_wh": 0.2108,
+      "duration_min": 1.2132,
+      "score": 0.31293579855566955,
+      "solver": "HiGHS MILP",
+      "solver_optimal": true,
+      "started": 0.0,
+      "initial_battery": 88,
+      "done": false,
+      "id": "F0-LH-003"
+    },
+    {
+      "drone_id": "LH-007",
+      "station_id": "S04",
+      "orders": [
+        "LH-DEMO-003",
+        "LH-DEMO-005",
+        "LH-DEMO-004"
+      ],
+      "legs": [
+        {
+          "from": [
+            825,
+            580
+          ],
+          "to": [
+            885,
+            330
+          ],
+          "path": [
+            [
+              825,
+              580
+            ],
+            [
+              885,
+              330
+            ]
+          ],
+          "start": 0.0,
+          "end": 0.6617442576214958,
+          "energy": 2.335794893079352,
+          "solar": 0.11968411157549168,
+          "order_id": "LH-DEMO-003"
+        },
+        {
+          "from": [
+            885,
+            330
+          ],
+          "to": [
+            580,
+            445
+          ],
+          "path": [
+            [
+              885,
+              330
+            ],
+            [
+              658,
+              363
+            ],
+            [
+              580,
+              445
+            ]
+          ],
+          "start": 0.6617442576214958,
+          "end": 1.476971578271915,
+          "energy": 2.632844811146114,
+          "solar": 0.15946692151258862,
+          "order_id": "LH-DEMO-005"
+        },
+        {
+          "from": [
+            580,
+            445
+          ],
+          "to": [
+            390,
+            595
+          ],
+          "path": [
+            [
+              580,
+              445
+            ],
+            [
+              390,
+              595
+            ]
+          ],
+          "start": 1.476971578271915,
+          "end": 2.1117315795977127,
+          "energy": 1.688086133147807,
+          "solar": 0.11268979234364672,
+          "order_id": "LH-DEMO-004"
+        },
+        {
+          "from": [
+            390,
+            595
+          ],
+          "to": [
+            825,
+            580
+          ],
+          "path": [
+            [
+              390,
+              595
+            ],
+            [
+              825,
+              580
+            ]
+          ],
+          "start": 2.1117315795977127,
+          "end": 3.0934459184202834,
+          "energy": 2.8137547054472156,
+          "solar": 0.20262035662281025,
+          "order_id": null
+        }
+      ],
+      "arrivals": {
+        "LH-DEMO-003": 0.6617,
+        "LH-DEMO-005": 1.477,
+        "LH-DEMO-004": 2.1117
+      },
+      "distance_m": 1276.99,
+      "energy_wh": 10.2705,
+      "solar_wh": 0.5945,
+      "duration_min": 3.0934,
+      "score": 0.8488325521520779,
+      "solver": "HiGHS MILP",
+      "solver_optimal": true,
+      "started": 0.0,
+      "initial_battery": 72,
+      "done": false,
+      "id": "F0-LH-007"
+    }
+  ],
+  "dispatches": [
+    {
+      "routes": [
+        {
+          "drone_id": "LH-001",
+          "station_id": "S01",
+          "orders": [
+            "LH-DEMO-001",
+            "LH-DEMO-006"
+          ],
+          "legs": [
+            {
+              "from": [
+                160,
+                170
+              ],
+              "to": [
+                285,
+                230
+              ],
+              "path": [
+                [
+                  160,
+                  170
+                ],
+                [
+                  285,
+                  230
+                ]
+              ],
+              "start": 0.0,
+              "end": 0.4490198387906259,
+              "energy": 1.1185888151861985,
+              "solar": 0.06454594221453022,
+              "order_id": "LH-DEMO-001"
+            },
+            {
+              "from": [
+                285,
+                230
+              ],
+              "to": [
+                90,
+                340
+              ],
+              "path": [
+                [
+                  285,
+                  230
+                ],
+                [
+                  90,
+                  340
+                ]
+              ],
+              "start": 0.4490198387906259,
+              "end": 1.0511141846461955,
+              "energy": 1.646696974582314,
+              "solar": 0.10422285444576362,
+              "order_id": "LH-DEMO-006"
+            },
+            {
+              "from": [
+                90,
+                340
+              ],
+              "to": [
+                160,
+                170
+              ],
+              "path": [
+                [
+                  90,
+                  340
+                ],
+                [
+                  160,
+                  170
+                ]
+              ],
+              "start": 1.0511141846461955,
+              "end": 1.581300540803707,
+              "energy": 1.1884947827770906,
+              "solar": 0.08558430351602694,
+              "order_id": null
+            }
+          ],
+          "arrivals": {
+            "LH-DEMO-001": 0.449,
+            "LH-DEMO-006": 1.0511
+          },
+          "distance_m": 546.39,
+          "energy_wh": 4.7538,
+          "solar_wh": 0.2544,
+          "duration_min": 1.5813,
+          "score": 0.37906915685665815,
+          "solver": "HiGHS MILP",
+          "solver_optimal": true
+        },
+        {
+          "drone_id": "LH-003",
+          "station_id": "S02",
+          "orders": [
+            "LH-DEMO-002"
+          ],
+          "legs": [
+            {
+              "from": [
+                800,
+                160
+              ],
+              "to": [
+                575,
+                135
+              ],
+              "path": [
+                [
+                  800,
+                  160
+                ],
+                [
+                  575,
+                  135
+                ]
+              ],
+              "start": 0.0,
+              "end": 0.6065815884580379,
+              "energy": 1.665073579212202,
+              "solar": 0.10538594772832338,
+              "order_id": "LH-DEMO-002"
+            },
+            {
+              "from": [
+                575,
+                135
+              ],
+              "to": [
+                800,
+                160
+              ],
+              "path": [
+                [
+                  575,
+                  135
+                ],
+                [
+                  800,
+                  160
+                ]
+              ],
+              "start": 0.6065815884580379,
+              "end": 1.2131631769160758,
+              "energy": 1.463476874935092,
+              "solar": 0.10538594772832338,
+              "order_id": null
+            }
+          ],
+          "arrivals": {
+            "LH-DEMO-002": 0.6066
+          },
+          "distance_m": 452.77,
+          "energy_wh": 3.9286,
+          "solar_wh": 0.2108,
+          "duration_min": 1.2132,
+          "score": 0.31293579855566955,
+          "solver": "HiGHS MILP",
+          "solver_optimal": true
+        },
+        {
+          "drone_id": "LH-007",
+          "station_id": "S04",
+          "orders": [
+            "LH-DEMO-003",
+            "LH-DEMO-005",
+            "LH-DEMO-004"
+          ],
+          "legs": [
+            {
+              "from": [
+                825,
+                580
+              ],
+              "to": [
+                885,
+                330
+              ],
+              "path": [
+                [
+                  825,
+                  580
+                ],
+                [
+                  885,
+                  330
+                ]
+              ],
+              "start": 0.0,
+              "end": 0.6617442576214958,
+              "energy": 2.335794893079352,
+              "solar": 0.11968411157549168,
+              "order_id": "LH-DEMO-003"
+            },
+            {
+              "from": [
+                885,
+                330
+              ],
+              "to": [
+                580,
+                445
+              ],
+              "path": [
+                [
+                  885,
+                  330
+                ],
+                [
+                  658,
+                  363
+                ],
+                [
+                  580,
+                  445
+                ]
+              ],
+              "start": 0.6617442576214958,
+              "end": 1.476971578271915,
+              "energy": 2.632844811146114,
+              "solar": 0.15946692151258862,
+              "order_id": "LH-DEMO-005"
+            },
+            {
+              "from": [
+                580,
+                445
+              ],
+              "to": [
+                390,
+                595
+              ],
+              "path": [
+                [
+                  580,
+                  445
+                ],
+                [
+                  390,
+                  595
+                ]
+              ],
+              "start": 1.476971578271915,
+              "end": 2.1117315795977127,
+              "energy": 1.688086133147807,
+              "solar": 0.11268979234364672,
+              "order_id": "LH-DEMO-004"
+            },
+            {
+              "from": [
+                390,
+                595
+              ],
+              "to": [
+                825,
+                580
+              ],
+              "path": [
+                [
+                  390,
+                  595
+                ],
+                [
+                  825,
+                  580
+                ]
+              ],
+              "start": 2.1117315795977127,
+              "end": 3.0934459184202834,
+              "energy": 2.8137547054472156,
+              "solar": 0.20262035662281025,
+              "order_id": null
+            }
+          ],
+          "arrivals": {
+            "LH-DEMO-003": 0.6617,
+            "LH-DEMO-005": 1.477,
+            "LH-DEMO-004": 2.1117
+          },
+          "distance_m": 1276.99,
+          "energy_wh": 10.2705,
+          "solar_wh": 0.5945,
+          "duration_min": 3.0934,
+          "score": 0.8488325521520779,
+          "solver": "HiGHS MILP",
+          "solver_optimal": true
+        }
+      ],
+      "unassigned": [],
+      "history": [
+        1.62092,
+        1.62092,
+        1.54125,
+        1.54125,
+        1.54084,
+        1.54084,
+        1.54084,
+        1.54084,
+        1.54084,
+        1.54084,
+        1.54084,
+        1.54084,
+        1.54084,
+        1.54084,
+        1.54084,
+        1.54084,
+        1.54084,
+        1.54084,
+        1.54084,
+        1.54084,
+        1.54084,
+        1.54084,
+        1.54084,
+        1.54084,
+        1.54084,
+        1.54084
+      ],
+      "method": "vns",
+      "elapsed_ms": 426.9,
+      "score": 1.54084,
+      "reason": "未分配订单可能受库存、时间窗、载重、电量或任务上限限制",
+      "milp_subproblems": 86,
+      "seed": 42,
+      "at": 0.0
+    }
+  ],
+  "energy_log": [],
+  "experiments": [],
+  "logs": [
+    {
+      "at": 0.0,
+      "kind": "dispatch",
+      "text": "云端 · VNS 完成，派出 3 架，待分配 0 单"
+    },
+    {
+      "at": 0,
+      "kind": "system",
+      "text": "绿航智递仿真环境已初始化 · 所有地理和运行数据均为模拟"
+    }
+  ],
+  "settings": {
+    "auto_dispatch": false,
+    "algorithm": "vns"
+  },
+  "next_order": 1001,
+  "pickup_points": [
+    {
+      "id": "P01",
+      "name": "银杏苑 2 栋取件点",
+      "x": 285,
+      "y": 230,
+      "available": true
+    },
+    {
+      "id": "P02",
+      "name": "图书馆东侧",
+      "x": 575,
+      "y": 135,
+      "available": true
+    },
+    {
+      "id": "P03",
+      "name": "东区公共取件点",
+      "x": 885,
+      "y": 330,
+      "available": true
+    },
+    {
+      "id": "P04",
+      "name": "青禾广场",
+      "x": 390,
+      "y": 595,
+      "available": true
+    },
+    {
+      "id": "P05",
+      "name": "社区服务中心",
+      "x": 580,
+      "y": 445,
+      "available": true
+    },
+    {
+      "id": "P06",
+      "name": "校园西门",
+      "x": 90,
+      "y": 340,
+      "available": true
+    }
+  ],
+  "user": {
+    "role": "demo",
+    "username": "offline-demo"
+  },
+  "demo_provenance": {
+    "generator": "backend.simulation.apply_dispatch(seed_state(), \"vns\")",
+    "database_access": false,
+    "scope": "Replay of computed flight paths; station charging is not replayed."
+  }
+}

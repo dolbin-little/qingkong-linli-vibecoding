@@ -1,0 +1,50 @@
+[
+  {
+    "title": "Priority-Based Offloading Optimization in Cloud-Edge Collaborative Computing",
+    "url": "https://www.cs.newpaltz.edu/~lik/publications/Zhenli-He-IEEE-TSC-2023",
+    "level": "方法迁移，非论文复现",
+    "use": "借鉴任务优先级、不可卸载关键任务及计算/传输时延权衡。在候选成本模型中将关键任务限制为机载节点；当前速度外环实际运行在本机飞行进程，未部署机载伴随计算机。",
+    "files": "autonomy/research.py::offload；engine.py::snapshot",
+    "boundary": "没有复现原文M/G/1排队、KKT求解，也没有真实远端任务卸载。机载/边缘/云端是成本模型候选，当前不是三地实际部署。"
+  },
+  {
+    "title": "DR-GGAD: Dual Residual Centering for Mitigating Anomaly Non-Discriminativity in Generalist Graph Anomaly Detection",
+    "url": "https://proceedings.iclr.cc/paper_files/paper/2026/hash/7538e7a7a589a267f49527fe6fbc640e-Abstract-Conference.html",
+    "level": "研究思路启发，非模型复现",
+    "use": "从双残差信号融合获得启发，新增遥测特征稳健中心残差与偏差统计。当前未提供图邻居时以稳健中心代替邻域输入，仅提供异常线索。",
+    "files": "autonomy/research.py::ResidualMonitor",
+    "boundary": "不含图编码器、HR/AR训练目标或原模型权重。不能报告原论文准确率，也不用于替代飞行保护。"
+  },
+  {
+    "title": "基于双层区块链的云边协同方法（ZL 202310752982.9）",
+    "url": "https://patents.google.com/patent/CN116684168B/zh",
+    "level": "可信记录架构启发",
+    "use": "借鉴本地与上层协同留痕的分层思想，飞行事件形成哈希链，关键头部写入边缘检查点记录。",
+    "files": "autonomy/research.py::AuditChain；engine.py::event",
+    "boundary": "仅本机日志及摘要检查，不含CA、委员会共识、拜占庭容错、分布式存储或链上卸载。不宣称已实施整项专利或拥有其权利。"
+  },
+  {
+    "title": "IA-GGAD: Zero-shot Generalist Graph Anomaly Detection via Invariant and Affinity Learning",
+    "url": "https://proceedings.neurips.cc/paper_files/paper/2025/hash/788f9787ec93e3e1f34658fb003a1f44-Abstract-Conference.html",
+    "level": "后续研究参考，未集成",
+    "use": "跨社区遥测特征域迁移可参考不变表征与亲和学习，目前作为后续研究方向。",
+    "files": "docs/技术来源与实现对照.json",
+    "boundary": "当前版本未训练或部署该算法，不能作为已实现创新。"
+  },
+  {
+    "title": "MAVLink / ArduPilot Guided protocol",
+    "url": "https://ardupilot.org/dev/docs/copter-commands-in-guided-mode.html",
+    "level": "标准协议实现",
+    "use": "标准心跳、定位、电池、测距、命令回执与LOCAL_NED速度控制，另实现航点上传握手。",
+    "files": "autonomy/mavlink_adapter.py；simulator.py",
+    "boundary": "自建模拟飞控联调不是ArduPilot/PX4 SITL验收。真实ArduCopter需逐机标定与联调。"
+  },
+  {
+    "title": "已知方法：A*、位置反馈控制、α–β跟踪、独立安全监控",
+    "url": "https://mavlink.io/en/services/mission.html",
+    "level": "通用工程方法与本项目集成",
+    "use": "自主编写已知地图A*、净空复核、位置P/速度反馈、限幅、时效监控与目标跟踪，并以独立MAVLink进程验证。",
+    "files": "autonomy/planning.py；perception.py；safety.py",
+    "boundary": "不主张A*、PID类控制或MAVLink协议的原创性，不宣称端到端深度飞行模型。"
+  }
+]

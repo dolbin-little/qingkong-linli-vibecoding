@@ -1,0 +1,11 @@
+runtime/
+frontend/model3d/vendor/
+data/
+logs/
+reports/
+__pycache__/
+.pytest_cache/
+*.pyc
+config/*.key
+.env
+*.zip

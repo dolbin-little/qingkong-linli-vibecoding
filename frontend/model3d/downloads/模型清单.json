@@ -1,0 +1,27 @@
+{
+  "version": "2.0.0",
+  "units": "metres",
+  "models": [
+    {
+      "name": "太阳能辅助无人机",
+      "meshes": 997,
+      "glb_bytes": 4814496,
+      "nodes": 1021,
+      "materials": 27
+    },
+    {
+      "name": "光伏共享站点",
+      "meshes": 514,
+      "glb_bytes": 5592736,
+      "nodes": 525,
+      "materials": 16
+    },
+    {
+      "name": "社区配送场景",
+      "meshes": 1199,
+      "glb_bytes": 4199656,
+      "nodes": 1332,
+      "materials": 1203
+    }
+  ]
+}

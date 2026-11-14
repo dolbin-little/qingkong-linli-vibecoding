@@ -1,0 +1,174 @@
+[
+  {
+    "file": "autonomy/client.py",
+    "sha256": "202e81039a3e5bc38fbd06e889fcba12068b66f25f271158cfa774beefcd5697"
+  },
+  {
+    "file": "autonomy/engine.py",
+    "sha256": "7ea9f1f8f3a2f6a8d018aa0099742a9a51fe39c6e51209a0e1c3744ce007e9c1"
+  },
+  {
+    "file": "autonomy/mavlink_adapter.py",
+    "sha256": "9ba16579553825ce5ce1f805a7f450ab24b9beecfc3f5310c05bc32c11db4912"
+  },
+  {
+    "file": "autonomy/models.py",
+    "sha256": "641ba3ca2e2990d81eef31cb65304f42b152b1338e83b4637103dcbcf7cdf12d"
+  },
+  {
+    "file": "autonomy/perception.py",
+    "sha256": "f715f7b9f6da29a0e2bb031f781ce0eb8addaae33d04b447177ee6a7091e25ef"
+  },
+  {
+    "file": "autonomy/planning.py",
+    "sha256": "73836e1cdb7b2ae086534b7f428022574c3cbcc26d3d001c7e91618634d7ddc5"
+  },
+  {
+    "file": "autonomy/research.py",
+    "sha256": "65354eca3b8a2f81f9a6cd781c040bff18692295ec9209a75d97b20eabf74a87"
+  },
+  {
+    "file": "autonomy/safety.py",
+    "sha256": "3905e8dafe058745245f9dfe53af9ca4b6e7b00cbec03f33ae3884b8cbe2e657"
+  },
+  {
+    "file": "autonomy/simulator.py",
+    "sha256": "ba1c534f1d8808469d46080f65f23844a64ba0c43e6ca6dedc4b6e0a7df3d492"
+  },
+  {
+    "file": "autonomy/worker.py",
+    "sha256": "0065d19a33f8d7305d17709388809b9a526161d1ae85ac75c8b4c53996c1ffba"
+  },
+  {
+    "file": "autonomy/__init__.py",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "file": "desktop/console.py",
+    "sha256": "f7df2092f8ed7bdee5884840b7afeea56468886d7cd7e019bda8eb115053993b"
+  },
+  {
+    "file": "desktop/__init__.py",
+    "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+  },
+  {
+    "file": "backend/app.py",
+    "sha256": "a71e0cce1aa324093b4d87d83c112b70d2425347f46a803802c7e82fc1f27789"
+  },
+  {
+    "file": "backend/avoidance.py",
+    "sha256": "89c04df5ad4ce903fa3a747dc18ef6d21e425cdaf093d8da13b50a500170112a"
+  },
+  {
+    "file": "backend/energy.py",
+    "sha256": "fe98b9f1eab24b3fc2425790ec5fa4856478c8636b3845f9226c06399af33285"
+  },
+  {
+    "file": "backend/forecast.py",
+    "sha256": "cd80b887522a45b3e8c611961e6261b1d78dea6bb7374efef55f5813dee01ccf"
+  },
+  {
+    "file": "backend/learning.py",
+    "sha256": "2f0e9471079be55f698fcec3891d18e3bed0c5c37c0e3ebe296611cabca320a3"
+  },
+  {
+    "file": "backend/mqtt_bridge.py",
+    "sha256": "5beb5ff0c271d8969ce75409d26d81b076c8f1af26b55cfe5ebc210afb703684"
+  },
+  {
+    "file": "backend/pickup.py",
+    "sha256": "07fbaa8c9fcd7dbcd4bf1c1e24ffbe0dfd555659304af31f743ac3d735bcf247"
+  },
+  {
+    "file": "backend/planner.py",
+    "sha256": "564ac344725444bc3c413e46d4537122194bb7fb0c9f2fc1c1455607499afaf7"
+  },
+  {
+    "file": "backend/simulation.py",
+    "sha256": "17eaf18d4832c70001e3b7630c4ff42c4101fcea6bc7259cc22aedcfc74a3e87"
+  },
+  {
+    "file": "backend/solver.py",
+    "sha256": "1f6d7a53d95231438da19bf1ddd62602e814bbcb716ca043f1554c76223bf637"
+  },
+  {
+    "file": "backend/store.py",
+    "sha256": "3cac91604975aec06c5a407f69f62b0b03cdefe60034cb72b20e3ee4ff4d93b1"
+  },
+  {
+    "file": "backend/__init__.py",
+    "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+  },
+  {
+    "file": "tools/control_check.py",
+    "sha256": "94c7b43e9fb69ad1870d439ee9de011862420653f1f91068a3e0a5704f1170ba"
+  },
+  {
+    "file": "tools/delivery_check.py",
+    "sha256": "8ce70748749feb5b9d1233a581c4a16326bfc0ec5ca85008af1a4f71fc2c732a"
+  },
+  {
+    "file": "tools/finalize_delivery.py",
+    "sha256": "95a49087d361ae367f80eb7e204c9e1a1be31620a7cfc9027289952482eb6397"
+  },
+  {
+    "file": "tools/gateway_check.py",
+    "sha256": "eea49cbbc0071213f1ebd81340a6cae0d7f465f25cdd87661b98ff1c7d821249"
+  },
+  {
+    "file": "tools/integration_check.py",
+    "sha256": "8df6c78b1d5546e37706b2d574cb977272ba984094e4e017946960b4c8355949"
+  },
+  {
+    "file": "tools/launch.py",
+    "sha256": "575d39124e2a01f68c5527970b91874556993404fdea0cac207eac7e3e87de83"
+  },
+  {
+    "file": "tools/package_delivery.py",
+    "sha256": "7716f76ecdfecd7c62923795bddea761e96d22f3739e3645a34a11963bf46503"
+  },
+  {
+    "file": "tools/scenario_check.py",
+    "sha256": "bb3e3bfec40cb73caf3b73d8f4b7fddf0d4b1a1d3680c4b0330d1a849e8ac3d5"
+  },
+  {
+    "file": "tools/write_delivery_docs.py",
+    "sha256": "e9c06b5f6aee337a5e9be257ad73cb15b6928f83f531e1c145674bbc4dfccc21"
+  },
+  {
+    "file": "tests_autonomy/test_core.py",
+    "sha256": "bc8b678d8a7381aac7c47d9c48ddb9d596b95052bc42eaf2b5db85dee816c6db"
+  },
+  {
+    "file": "tests_autonomy/test_engine_regressions.py",
+    "sha256": "fcd671154f80c2719e7a87b6514ca74a7c67176ece21e0f0bc1514034ee2a1c9"
+  },
+  {
+    "file": "tests_autonomy/test_landed_delivery.py",
+    "sha256": "5f454a48177a9fe26a5abaeac65bcf4913f064e49d845fc6d4da34603322683b"
+  },
+  {
+    "file": "sky_platform.py",
+    "sha256": "ddfdc2068b4d3d7e5954436b7601a13000dbcad2b9502ac52af5c7902b721145"
+  },
+  {
+    "file": "frontend/sky.html",
+    "sha256": "42ca0c74ff85ec534020c2be333c54c6c2b827b852e774598ba0e2c893fba252"
+  },
+  {
+    "file": "frontend/sky.css",
+    "sha256": "44a8435661da2fd4a200be10e5167d0e2133512c685f52d664e629e50cb84e4a"
+  },
+  {
+    "file": "frontend/sky.js",
+    "sha256": "46980732a0b48045bf103ad2653b20358d6d6d774fb833efd2503efff2a7efd7"
+  },
+  {
+    "file": "frontend/sky-scene.mjs",
+    "sha256": "b663b203345fc7279c2bc91866244f7e28b77393fbcaecd0e76d93e2d9272076"
+  },
+  {
+    "file": "config/project.json",
+    "sha256": "86dac2fb5f3d025b06b46eecca9794a9f943598a32632dac5b7a4c1f9ac792fb"
+  }
+]

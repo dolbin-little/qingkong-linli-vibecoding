@@ -1,0 +1,10 @@
+fastapi>=0.115,<1
+uvicorn>=0.30,<1
+numpy>=2.0,<3
+scipy>=1.14,<2
+pydantic>=2.9,<3
+pytest>=8,<10
+httpx>=0.27,<1
+paho-mqtt>=2,<3
+pymavlink==2.4.50
+pyserial==3.5
