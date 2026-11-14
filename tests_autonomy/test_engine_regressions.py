@@ -15,9 +15,11 @@ def test_low_battery_return_still_sends_control(tmp_path):
     assert e.phase=='RETURNING' and e.adapter.velocities and any(abs(v)>0 for v in e.adapter.velocities[-1])
     assert e.adapter.lands==0
 
-def test_autopilot_unexpected_disarm_becomes_terminal(tmp_path):
+def test_autopilot_unexpected_disarm_requires_ground_confirmation(tmp_path):
     e=FlightEngine(tmp_path);e.adapter=Adapter(armed=False);e.phase='RETURNING';e.started=1;e.tick(1000)
-    assert e.phase=='STOPPED' and e.fault=='AUTOPILOT_DISARMED'
+    assert e.phase=='LANDING' and e.fault=='AUTOPILOT_DISARMED'
+    e.adapter.t.position[2]=0;e.tick(1000.1)
+    assert e.phase=='STOPPED'
 
 def test_mode_confirmation_timeout_cancels_pending_arm(tmp_path):
     e=FlightEngine(tmp_path);e.adapter=Adapter(armed=False);e.adapter.t.mode='STABILIZE';e.phase='ARMING';e.pending_arm=True;e.arm_requested_at=994;e.tick(1000)

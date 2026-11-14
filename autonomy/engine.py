@@ -4,6 +4,7 @@ from .models import scene,SCENARIOS,distance,norm,finite_vector
 from .mavlink_adapter import MAVLinkAdapter
 from .planning import astar,PositionController,energy_budget,safe_segment
 from .safety import SafetyGuard
+from .safety_status import describe,LoopTiming
 from .research import AuditChain,ResidualMonitor,offload
 from .perception import Tracker
 
@@ -13,7 +14,7 @@ FAULT_TEXT={'PAYLOAD_RELEASE_REJECTED':'卸货机构拒绝执行，留在交付�
 
 class FlightEngine:
     def __init__(self,root=ROOT,business=None):
-        self.business=business;self.task=None
+        self.business=business;self.task=None;self.tracking_enabled=True;self.timing=LoopTiming();self.last_protection_send=0.
         self.root=Path(root);self.root.joinpath('logs').mkdir(exist_ok=True,parents=True);self.lock=threading.RLock();self.adapter=None;self.s=scene();self.route=[];self.index=0;self.phase='DISCONNECTED';self.events=[];self.guard=SafetyGuard();self.controller=PositionController(max_speed=2.7);self.tracker=Tracker();self.monitor=ResidualMonitor();self.audit=AuditChain(self.root/'logs/flight-chain.jsonl');self.edge=AuditChain(self.root/'logs/edge-checkpoints.jsonl');self.fault=None;self.simulation=True;self.running=True;self.last_tick=time.monotonic();self.last_sample=0;self.started=None;self.finished=None;self.run_id=None;self.trace=[];self.hold_since=None;self.manual=False;self.lease=None;self.lease_at=0.;self.pending_arm=False;self.returning=False;self.delivery_at=None;self.delivered=False;self.order_id=None;self.reason='请连接模拟飞控或真实遥测';self.cloud=True;self.stats={'ticks':0,'guard_interventions':0,'max_period_ms':0.,'replans':0};self.model_score={'score':0,'status':'待采集'};self.last_manual=0.;self.manual_v=[0.,0.,0.]
     def event(self,name,payload=None):
         item={'time':time.time(),'run_id':self.run_id,'name':name,'details':payload or {}};self.events.insert(0,item);self.events=self.events[:100]
@@ -57,7 +58,10 @@ class FlightEngine:
                 self.event(cmd.upper(),{'task':task_id});return {'ok':True,'reason':result['reason']}
 
             if cmd=='release':
-                if self.lease==owner:self.lease=None
+                if self.lease==owner:
+                    self.lease=None
+                    if self.phase=='MANUAL' and self.adapter and self.adapter.t.armed:
+                        self.manual_v=[0.,0.,0.];self.protect('CONTROL_LEASE_EXPIRED','HOLD')
                 return {'released':True}
             if cmd=='connect':
                 if self.task:raise ValueError('有关联业务任务，先完成或取消/核对恢复，再切换连接')
@@ -131,15 +135,22 @@ class FlightEngine:
                 self.adapter.guided();self.pending_arm=True;self.arm_requested_at=time.monotonic();self.phase='ARMING';self.reason='等待GUIDED模式及解锁回执';self.event('ARM_REQUEST')
             elif cmd=='start':
                 if not self.simulation:raise ValueError('真实自主交付须先适配着陆点和投放机构反馈；当前交付闭环仅在本机模拟器验证')
-                if not self.adapter.t.armed or self.phase not in ('ARMED','HOLD'):raise ValueError('需要飞控确认解锁；故障锁止须先复位')
+                if not self.adapter.t.armed or self.phase not in ('ARMED','HOLD','MANUAL'):raise ValueError('需要飞控确认解锁；故障锁止须先复位')
                 ok,reason=self.guard.check(self.adapter.t,self.s,time.monotonic())
                 if ok:raise ValueError('当前不满足执行条件：'+ok)
                 if self.fault:raise ValueError('故障未复位')
+                self.manual=False;self.manual_v=[0.,0.,0.]
                 self.phase='RETURNING' if self.returning else 'EXECUTING';self.reason='自主执行航点';self.started=self.started or time.time();self.hold_since=None;self.controller.reset();self.event('START')
             elif cmd=='hold':self.pending_arm=False;self.phase='HOLD';self.manual=False;self.adapter.velocity([0.,0.,0.]);self.reason='操作员请求安全悬停';self.event('HOLD')
             elif cmd=='land':self.pending_arm=False;self.adapter.land();self.phase='LANDING';self.reason='请求飞控受控降落';self.event('LAND')
-            elif cmd=='rtl':self.begin_return()
-            elif cmd=='manual':self.phase='MANUAL';self.manual=True;self.pending_arm=False;self.adapter.velocity([0.,0.,0.]);self.reason='人工接管，自动航点暂停';self.event('MANUAL')
+            elif cmd=='rtl':
+                if self.fault or self.phase in ('LANDING','LINK_LOST'):raise ValueError('保护锁止中，禁止恢复航线')
+                try:self.begin_return()
+                except ValueError:self.protect('RETURN_ROUTE_BLOCKED','LAND')
+            elif cmd=='manual':
+                self.check_lease(owner)
+                if not self.adapter.t.armed or self.fault or self.phase in ('LANDING','LINK_LOST'):raise ValueError('当前不能接管速度控制；保护锁止请先受控落地')
+                self.manual_v=[0.,0.,0.];self.last_manual=0.;self.phase='MANUAL';self.manual=True;self.pending_arm=False;self.adapter.velocity([0.,0.,0.]);self.reason='人工接管，自动航点暂停';self.event('MANUAL')
             elif cmd=='jog':
                 if self.phase!='MANUAL' or not self.adapter.t.armed:raise ValueError('需已解锁并处于人工模式')
                 v=data.get('velocity')
@@ -198,26 +209,55 @@ class FlightEngine:
     def delivery_abort(self,reason):
         self.pending_arm=False;self.fault=reason;self.delivery_status='FAILED';self.phase='LANDING';self.reason=reason;self.event('DELIVERY_ABORT',{'reason':reason})
         if self.adapter.t.armed:self.adapter.land()
-    def protect(self,reason,action):
+    def can_control(self):
+        if self.simulation:return True
+        try:
+            cfg=json.loads((self.root/'config/project.json').read_text(encoding='utf-8'))
+            return bool(cfg.get('real_control_enabled') and getattr(self,'live_confirmed',False))
+        except (OSError,ValueError):return False
+
+    def protect(self,reason,action,now=None):
         if reason!=self.fault:
             self.stats['guard_interventions']+=1;self.event('FAULT',{'reason':reason,'response':action})
-        self.fault=reason;self.pending_arm=False;self.reason=reason
+        self.fault=reason;self.pending_arm=False
+        info=describe(reason,self.phase);self.reason=info['title']+'；'+info['action']
+        if not self.can_control():return
+        now=time.monotonic() if now is None else now
+        if reason=='LINK_LOSS':
+            self.phase='LINK_LOST'
+            if now-self.last_protection_send>1:
+                self.adapter.land();self.last_protection_send=now
+            return
+        # Once landing has started, no lower-severity fault may restore velocity control.
+        if self.phase=='LANDING':return
         if action=='LAND':self.adapter.land();self.phase='LANDING'
         elif action=='RTL' and not self.returning:
             try:self.begin_return()
-            except ValueError:self.adapter.land();self.phase='LANDING'
-        elif action=='HOLD':self.phase='HOLD';self.hold_since=self.hold_since or time.monotonic();self.adapter.velocity([0.,0.,0.])
+            except ValueError:self.protect('RETURN_ROUTE_BLOCKED','LAND',now)
+        elif action=='HOLD':self.phase='HOLD';self.hold_since=self.hold_since or now;self.adapter.velocity([0.,0.,0.])
     def tick(self,now=None):
         now=now or time.monotonic()
         with self.lock:
+            late=self.timing.observe(now)
             period=now-self.last_tick;self.last_tick=now;self.stats['ticks']+=1;self.stats['max_period_ms']=max(self.stats['max_period_ms'],round(period*1000,1))
             if not self.adapter:return
             t=self.adapter.poll(now)
             detection=getattr(self.adapter,'detection',None)
-            if self.simulation and detection and now-detection['at']<.25 and detection['at']>getattr(self,'last_detection_at',0):
+            if self.simulation and self.tracking_enabled and detection and now-detection['at']<.25 and detection['at']>getattr(self,'last_detection_at',0):
                 self.tracker.ingest([detection],detection['at'],'synthetic_sensor_MAVLink');self.last_detection_at=detection['at']
             if self.phase=='CONNECTING' and now-t.heartbeat_at<1:self.phase='CONNECTED';self.reason='飞控心跳已建立，请载入任务'
-            if self.pending_arm and t.mode=='GUIDED':self.adapter.arm();self.pending_arm=False
+            if not self.can_control():
+                self.reason='外部飞控只读：仅接收遥测，不执行自动保护控制'
+                return
+            if self.phase=='LINK_LOST' and now-t.heartbeat_at<1 and now-t.position_at<.5:
+                self.adapter.land();self.phase='LANDING';self.reason='链路恢复，重新请求降落；禁止自动恢复任务'
+            if self.pending_arm and t.mode=='GUIDED' and not t.armed:
+                ready,why=self.guard.preflight(t,self.s,now)
+                if ready:self.adapter.arm();self.pending_arm=False
+                else:
+                    self.pending_arm=False
+                    if self.phase=='DEPARTURE_ARMING':self.delivery_abort('RETURN_PREFLIGHT_'+why)
+                    else:self.phase='READY';self.reason='解锁前复检未通过：'+why
             if self.phase in ('ARMING','DEPARTURE_ARMING'):
                 departure=self.phase=='DEPARTURE_ARMING'
                 if t.armed:
@@ -231,8 +271,11 @@ class FlightEngine:
             if not t.armed and self.started and self.phase in ('EXECUTING','RETURNING','HOLD','MANUAL'):
                 self.fault=self.fault or 'AUTOPILOT_DISARMED';self.phase='LANDING'
             if t.armed:
+                if late:self.protect('CONTROL_LOOP_LATE','LAND',now)
+                if self.phase=='MANUAL' and (not self.lease or now-self.lease_at>20):
+                    self.manual_v=[0.,0.,0.];self.protect('CONTROL_LEASE_EXPIRED','HOLD',now)
                 reason,response=self.guard.check(t,self.s,now)
-                if reason and not (reason=='BATTERY_RESERVE' and self.returning):self.protect(reason,response)
+                if reason and not (reason=='BATTERY_RESERVE' and self.returning):self.protect(reason,response,now)
                 if self.phase=='HOLD' and self.hold_since and now-self.hold_since>2.5:self.adapter.land();self.phase='LANDING';self.reason='保护悬停超时，转受控降落'
                 if self.phase in ('EXECUTING','RETURNING'):
                     if self.index>=len(self.route):
@@ -248,7 +291,7 @@ class FlightEngine:
                         else:
                             v=self.controller.step(t.position,t.velocity,target,.05);r,a=self.guard.check(t,self.s,now,v)
                             if r=='BATTERY_RESERVE' and self.returning:r=None
-                            if r:self.protect(r,a)
+                            if r:self.protect(r,a,now)
                             elif self.tracker.risk(t.position,v,now)<14 and now-getattr(self,'last_replan',0)>2:
                                 try:
                                     import copy
@@ -256,15 +299,15 @@ class FlightEngine:
                                     for ob in self.tracker.tracks.values():avoid['obstacles'].append({'id':ob['id'],'x':ob['position'][0]+2*ob['velocity'][0],'y':ob['position'][1]+2*ob['velocity'][1],'r':ob['radius']+2,'h':ob['position'][2]+4})
                                     self.route=astar(t.position,self.route[-1],avoid);self.index=1;self.controller.reset();self.stats['replans']+=1;self.last_replan=now;self.adapter.velocity([0.,0.,0.]);self.event('DYNAMIC_REPLAN',{'tracks':len(self.tracker.tracks)})
                                 except ValueError as e:
-                                    self.event('DYNAMIC_REPLAN_REJECT',{'reason':str(e),'position':t.position[:]});self.protect('TRACK_PREDICTED_CONFLICT','HOLD')
-                            elif self.tracker.risk(t.position,v,now)<3:self.protect('TRACK_PREDICTED_CONFLICT','HOLD')
+                                    self.event('DYNAMIC_REPLAN_REJECT',{'reason':str(e),'position':t.position[:]});self.protect('TRACK_PREDICTED_CONFLICT','HOLD',now)
+                            elif self.tracker.risk(t.position,v,now)<3:self.protect('TRACK_PREDICTED_CONFLICT','HOLD',now)
                             else:self.adapter.velocity(v)
                 elif self.phase in ('ARMED','HOLD'):self.adapter.velocity([0.,0.,0.])
                 elif self.phase=='MANUAL':
                     v=self.manual_v if now-self.last_manual<.35 else [0.,0.,0.];r,a=self.guard.check(t,self.s,now,v)
-                    if r:self.protect(r,a)
+                    if r:self.protect(r,a,now)
                     else:self.adapter.velocity(v)
-            elif self.phase=='LANDING':
+            elif self.phase=='LANDING' and now-t.heartbeat_at<1 and now-t.position_at<.5 and abs(t.position[2])<=.15 and norm(t.velocity)<.2:
                 self.finished=time.time();self.phase='COMPLETED' if self.delivered and self.returning and distance(t.position,self.s['home'])<1 and not self.fault else 'STOPPED';self.reason='交付并返航落地，任务记录已保存' if self.phase=='COMPLETED' else '已落地停止：'+FAULT_TEXT.get(self.fault,str(self.fault or '任务未完成'));self.event(self.phase,{'delivered':self.delivered,'delivery':{'status':getattr(self,'delivery_status','PENDING'),'label':DELIVERY_TEXT.get(getattr(self,'delivery_status','PENDING'),'等待到达'),'mode':'landed_release','height_m':0,'simulation':self.simulation},'fault':self.fault})
                 report=self.snapshot(now);report['trace']=self.trace[:];report['trace_window_limit_seconds']=600
                 (self.root/'reports').mkdir(exist_ok=True);(self.root/'reports'/f'flight-{self.run_id or "manual"}.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
@@ -278,7 +321,7 @@ class FlightEngine:
         with self.lock:
             t=self.adapter.t if self.adapter else None
             ages={'heartbeat':round(max(0,now-t.heartbeat_at),2),'position':round(max(0,now-t.position_at),2),'sensor':round(max(0,now-t.sensor_at),2)} if t else {}
-            return {'name':'晴空邻里','phase':self.phase,'reason':self.reason,'simulation':self.simulation,'telemetry':t.dump() if t else None,'ages':ages,'scenario':self.s,'route':self.route,'waypoint':self.index,'returning':self.returning,'delivered':self.delivered,'delivery':{'status':getattr(self,'delivery_status','PENDING'),'label':DELIVERY_TEXT.get(getattr(self,'delivery_status','PENDING'),'等待到达'),'mode':'landed_release','height_m':0,'simulation':self.simulation},'fault':self.fault,'lease':self.lease if now-self.lease_at<20 else None,'stats':self.stats,'events':[e for e in self.events if e.get('run_id')==self.run_id][:25],'acks':self.adapter.acks[-12:] if self.adapter else [],'pending':list(self.adapter.pending) if self.adapter else [],'traffic':{'received':self.adapter.received,'sent':self.adapter.sent} if self.adapter else {},'tracks':list(self.tracker.tracks.values()),'anomaly':self.model_score,'edge':offload(cloud=self.cloud),'critical_compute':offload(priority=3,cloud=self.cloud,deadline_ms=70),'audit':{'flight_head':self.audit.head,'flight_count':self.audit.count,'edge_head':self.edge.head,'verified':AuditChain.verify(self.audit.path)},'trace':self.trace[-300:],'run_id':self.run_id,'started':self.started,'finished':self.finished,'energy':energy_budget(self.route) if self.route else {},'order_id':self.order_id,'business_task':self.task,'real_control':'只读' if not getattr(self,'live_confirmed',False) else '已在本机确认'}
+            return {'name':'晴空邻里','phase':self.phase,'reason':self.reason,'simulation':self.simulation,'telemetry':t.dump() if t else None,'ages':ages,'scenario':self.s,'route':self.route,'waypoint':self.index,'returning':self.returning,'delivered':self.delivered,'delivery':{'status':getattr(self,'delivery_status','PENDING'),'label':DELIVERY_TEXT.get(getattr(self,'delivery_status','PENDING'),'等待到达'),'mode':'landed_release','height_m':0,'simulation':self.simulation},'fault':self.fault,'lease':self.lease if now-self.lease_at<20 else None,'stats':{**self.stats,'timing':self.timing.dump()},'safety_status':describe(self.fault,self.phase,not self.can_control()),'events':[e for e in self.events if e.get('run_id')==self.run_id][:25],'acks':self.adapter.acks[-12:] if self.adapter else [],'pending':list(self.adapter.pending) if self.adapter else [],'traffic':{'received':self.adapter.received,'sent':self.adapter.sent} if self.adapter else {},'tracks':list(self.tracker.tracks.values()),'anomaly':self.model_score,'edge':offload(cloud=self.cloud),'critical_compute':offload(priority=3,cloud=self.cloud,deadline_ms=70),'audit':{'flight_head':self.audit.head,'flight_count':self.audit.count,'edge_head':self.edge.head,'verified':AuditChain.verify(self.audit.path)},'trace':self.trace[-300:],'run_id':self.run_id,'started':self.started,'finished':self.finished,'energy':energy_budget(self.route) if self.route else {},'order_id':self.order_id,'business_task':self.task,'real_control':'只读' if not getattr(self,'live_confirmed',False) else '已在本机确认'}
     def loop(self):
         while self.running:
             start=time.monotonic()
@@ -290,8 +333,8 @@ class FlightEngine:
                     self.sync_business()
             except Exception as e:
                 with self.lock:
-                    self.reason='控制循环异常：'+str(e);self.fault='LOOP_ERROR';self.phase='HOLD'
-                    if self.adapter:
+                    self.reason='控制循环异常：'+str(e);self.fault='LOOP_ERROR';self.pending_arm=False;self.phase='LANDING'
+                    if self.adapter and self.can_control():
                         try:self.adapter.land()
                         except Exception:pass
             time.sleep(max(.002,.05-(time.monotonic()-start)))

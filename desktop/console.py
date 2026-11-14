@@ -123,9 +123,9 @@ class Console:
             self.task_signature=signature
         s=self.state
         if s:
-            self.phase.config(text={'DISCONNECTED':'等待连接','CONNECTING':'连接中','CONNECTED':'连接已建立','READY':'任务已就绪','ARMING':'等待解锁确认','ARMED':'已解锁','EXECUTING':'前往交付点并下降','DELIVERY_LANDING':'交付点着陆停桨','DELIVERY_RELEASING':'卸货与回执确认','DELIVERY_WAIT':'等待实物交付','DEPARTURE_ARMING':'交付后起飞准备','HOLD':'安全悬停','RETURNING':'自主返航','LANDING':'受控降落','COMPLETED':'已完成','STOPPED':'已停止','MANUAL':'人工接管'}.get(s['phase'],s['phase']));t=s.get('telemetry') or {};p=t.get('position',[0,0,0]);v=t.get('velocity',[0,0,0]);ages=s.get('ages',{})
+            self.phase.config(text={'LINK_LOST':'断链待确认','DISCONNECTED':'等待连接','CONNECTING':'连接中','CONNECTED':'连接已建立','READY':'任务已就绪','ARMING':'等待解锁确认','ARMED':'已解锁','EXECUTING':'前往交付点并下降','DELIVERY_LANDING':'交付点着陆停桨','DELIVERY_RELEASING':'卸货与回执确认','DELIVERY_WAIT':'等待实物交付','DEPARTURE_ARMING':'交付后起飞准备','HOLD':'安全悬停','RETURNING':'自主返航','LANDING':'受控降落','COMPLETED':'已完成','STOPPED':'已停止','MANUAL':'人工接管'}.get(s['phase'],s['phase']));t=s.get('telemetry') or {};p=t.get('position',[0,0,0]);v=t.get('velocity',[0,0,0]);ages=s.get('ages',{})
             self.metrics.config(text=f"订单 {s.get('order_id') or '独立模拟任务'}\n任务 {s.get('run_id') or '未载入'}\n连接 {'本机模拟飞控' if s['simulation'] else '外部飞控'}\n飞行器解锁 {t.get('armed',False)}\n电量 {t.get('battery',0):.1f}%\n位置 N/E/U\n{p[0]:7.2f} {p[1]:7.2f} {p[2]:7.2f} m\n速度 {math.sqrt(sum(x*x for x in v)):.2f} m/s\n心跳年龄 {ages.get('heartbeat',0):.2f} s\n定位年龄 {ages.get('position',0):.2f} s\n感知年龄 {ages.get('sensor',0):.2f} s\n航点 {s['waypoint']}/{len(s['route'])}\n交付 {s.get('delivery',{}).get('label','等待到达')}\n保护介入 {s['stats']['guard_interventions']}\n指令/消息 {s.get('traffic',{}).get('sent',0)}/{s.get('traffic',{}).get('received',0)}\n控制权 {s.get('lease') or '空闲'}")
-            if not self.busy and (time.monotonic()>=getattr(self,'message_until',0) or s.get('fault')):self.show(s['reason']+'   W/S/A/D平移，R/F升降，空格停止（仅人工模式）',keep_seconds=0)
+            if not self.busy and (time.monotonic()>=getattr(self,'message_until',0) or s.get('fault')):self.show((s.get('safety_status',{}).get('title','')+'；'+s.get('safety_status',{}).get('next','') if s.get('fault') else s['reason'])+'   W/S/A/D平移，R/F升降，空格停止（仅人工模式）',keep_seconds=0)
             self.draw()
         self.root.after(250,self.poll)
     def draw(self):
