@@ -1,8 +1,8 @@
-﻿晴空邻里系统架构与模块说明
+晴空邻里系统架构与模块说明
 
 网页(FastAPI+HTML/CSS/JavaScript+Three.js)
        ↓ 管理员会话、同源校验、命令网关
-独立飞行服务(Python/ThreadingHTTPServer，127.0.0.1:18952，20Hz外环)
+独立飞行服务(Python/ThreadingHTTPServer，127.0.0.1:19052，20Hz外环)
        ↑ Tkinter桌面软件：与网页共用操控权租约，关闭网页仍能运行
        ↓ MAVLink UDP/串口；遥测上行、指令及ACK下行
 模拟飞控(独立进程) 或 外部ArduCopter接口(默认只读)
@@ -50,7 +50,7 @@ GPS等级不足、临界电量<=15%请求降落；电量<=25%请求返航；起�
 带噪位置样本，这是本模拟器扩展，不是通用无人机目标检测协议。
 引擎只消费测量/检测输入，不读取data/simulator-truth.json进行规划。
 truth文件仅供评价器判定碰撞、里程、能耗；与感知数据明确分离。
-外部检测接口：POST本机18952/command，X-Sky-Key取自config/local-control.key。
+外部检测接口：POST本机19052/command，X-Sky-Key取自config/local-control.key。
 示例JSON：{"command":"detections","owner":"desktop","data":{"detections":[
 {"id":"target1","position":[40,30,12],"radius":2}]}}
 输入坐标必须在与飞行场景相同的NEU参考系中；当前没有相机/雷达标定适配器。

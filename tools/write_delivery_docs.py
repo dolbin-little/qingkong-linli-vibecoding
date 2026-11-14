@@ -12,7 +12,7 @@ docs={
 【直接运行，Windows 10/11 64位】
 1. 解压整个文件夹到有写权限的位置；不要直接在压缩包内启动。
 2. 双击“启动全部.cmd”：打开独立飞行软件并启动网页服务。
-3. 浏览器打开 http://127.0.0.1:18951/ 。管理员：admin / GreenFlight2026!
+3. 浏览器打开 http://127.0.0.1:19051/ 。管理员：admin / GreenFlight2026!
    也可双击“启动网页平台.cmd”直接打开浏览器。
 4. 网页与桌面任选一个操控端：连接模拟飞控 → 获取操控权 → 载入任务/场景 →
    等待遥测刷新 → 飞前解锁 → 确认已解锁 → 开始执行。
@@ -29,7 +29,7 @@ docs={
 【运行条件】
 已附便携Python、Tk/Tcl及依赖，无需另装Python或Node，也不需要联网下载网页库。
 建议8GB内存；浏览器支持WebGL。3D不支持时会退回俯视图。
-端口：18951网页、18952本机飞行服务、UDP18651模拟飞控。默认都只绑定本机。
+端口：19051网页、19052本机飞行服务、UDP18751模拟飞控。默认都只绑定本机。
 运行记录保存在本项目data、logs、reports内。首次会生成本机控制密钥与演示数据库。
 外部设备接入前请阅读“docs/无人机接入与验证边界.txt”。
 
@@ -132,7 +132,7 @@ Windows便携环境已加入pymavlink和pyserial。不能据此声称已验证�
 
 一、支持的接口
 串口示例 COM5，115200波特；UDP示例 udpin:127.0.0.1:14550 或 udpout:设备IP:14550。
-本机模拟器专用地址 udpout:127.0.0.1:18651，其他地址一律先进入真实设备只读路径。
+本机模拟器专用地址 udpout:127.0.0.1:18751，其他地址一律先进入真实设备只读路径。
 连接后接收HEARTBEAT、LOCAL_POSITION_NED、SYS_STATUS、GPS_RAW_INT、DISTANCE_SENSOR、
 ATTITUDE、COMMAND_ACK。外部连接会尝试协商相应消息频率，飞控可能拒绝未支持的消息。
 设备必须确实提供有效定位、水平测距和剩余电量；不会用默认95%电量通过飞前检查。
@@ -173,7 +173,7 @@ JSON格式：[{"lat":24.966,"lon":102.866,"alt":12}, ...]。
 
 网页(FastAPI+HTML/CSS/JavaScript+Three.js)
        ↓ 管理员会话、同源校验、命令网关
-独立飞行服务(Python/ThreadingHTTPServer，127.0.0.1:18952，20Hz外环)
+独立飞行服务(Python/ThreadingHTTPServer，127.0.0.1:19052，20Hz外环)
        ↑ Tkinter桌面软件：与网页共用操控权租约，关闭网页仍能运行
        ↓ MAVLink UDP/串口；遥测上行、指令及ACK下行
 模拟飞控(独立进程) 或 外部ArduCopter接口(默认只读)
@@ -221,7 +221,7 @@ GPS等级不足、临界电量<=15%请求降落；电量<=25%请求返航；起�
 带噪位置样本，这是本模拟器扩展，不是通用无人机目标检测协议。
 引擎只消费测量/检测输入，不读取data/simulator-truth.json进行规划。
 truth文件仅供评价器判定碰撞、里程、能耗；与感知数据明确分离。
-外部检测接口：POST本机18952/command，X-Sky-Key取自config/local-control.key。
+外部检测接口：POST本机19052/command，X-Sky-Key取自config/local-control.key。
 示例JSON：{"command":"detections","owner":"desktop","data":{"detections":[
 {"id":"target1","position":[40,30,12],"radius":2}]}}
 输入坐标必须在与飞行场景相同的NEU参考系中；当前没有相机/雷达标定适配器。
@@ -280,6 +280,6 @@ notice+='\n'.join(x['name']+' '+x['version']+' / '+str(x['source']) for x in pac
 (R/'docs/第三方资源说明.txt').write_text(notice,encoding='utf-8-sig')
 lock=R/'requirements-lock.txt';base=lock.read_text(encoding='utf-8').splitlines();base=[x for x in base if x and not any(x.startswith(n+'==') for n in ['pymavlink','pyserial','fastcrc','lxml'])];base += [n+'=='+metadata.version(n) for n in ['pymavlink','pyserial','fastcrc','lxml']];lock.write_text('\n'.join(base)+'\n',encoding='utf-8')
 req=R/'requirements.txt';text=req.read_text(encoding='utf-8');text+='\n'.join(n+'=='+metadata.version(n) for n in ['pymavlink','pyserial'] if n not in text)+'\n';req.write_text(text,encoding='utf-8')
-page='''<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>晴空邻里 · 开始使用</title><style>body{background:#f2f6ec;color:#234d48;font:17px/1.9 "Microsoft YaHei",sans-serif;margin:0;padding:8vw}main{max-width:1000px;margin:auto}small{color:#7f9783;letter-spacing:3px}h1{font-size:46px;line-height:1.3}h2{margin-top:45px}article{padding:30px 40px;border:1px solid #dfe8da;background:#fff;border-radius:18px;margin:25px 0}b{color:#297e6e}a{color:#2d8978}li{margin:13px 0}code{background:#edf3e6;padding:4px 10px;border-radius:5px}footer{font-size:14px;color:#829486;margin-top:50px}</style><main><small>SKY COMMONS / FUTURE NEIGHBORHOODS</small><h1>晴空邻里<br>让每一次抵达，都有依据。</h1><p>面向未来城市的绿色低空共享服务交互平台 · 自主飞行协同版</p><article><h2>开始演示</h2><ol><li>先解压完整文件夹，双击<b>启动全部.cmd</b>。</li><li>打开<a href="http://127.0.0.1:18951/">网页工作台</a>，账号<code>admin</code>，密码<code>GreenFlight2026!</code>。</li><li>任选网页或桌面，依次点击：<b>连接模拟飞控 → 获取操控权 → 载入任务 → 飞前解锁 → 开始执行</b>。</li><li>观察起飞、航点跟踪、交付点悬停、返航与受控降落；在评价页回放记录。</li></ol><p>默认只绑定本机，无需开放公共网络。若弹出防火墙访问询问，本机演示可选择取消。</p></article><article><h2>软件与平台各自负责什么</h2><p>网页负责城市服务、任务管理、三维监控和评价；独立桌面软件提供遥测、操控、接管与航点上传；飞行服务独立于二者运行，经MAVLink连接模拟飞控或外部设备。</p><p><a href="docs/平台与飞行软件使用说明.txt">详细使用说明</a>　·　<a href="docs/无人机接入与验证边界.txt">无人机接入</a>　·　<a href="docs/系统架构与模块说明.txt">系统架构</a>　·　<a href="docs/技术来源与实现对照.txt">论文与专利技术来源</a></p></article><article><h2>看到的结果，对应什么验证</h2><p>已验证Windows本机与自建MAVLink模拟飞控链路。真实ArduCopter接口默认只读，需校准地图与坐标并逐机验证。当前没有官方SITL、硬件在环或实地无人机飞行验收。</p><p>模型、光伏功率和耗电均为研究假设，实物投送机构未接入。成功、保护落地及失败记录分别保留。</p></article><footer>原D盘项目保持原样。新版全部位于E盘独立文件夹。请先降落，再运行“停止本项目服务.cmd”。</footer></main></html>'''
+page='''<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>晴空邻里 · 开始使用</title><style>body{background:#f2f6ec;color:#234d48;font:17px/1.9 "Microsoft YaHei",sans-serif;margin:0;padding:8vw}main{max-width:1000px;margin:auto}small{color:#7f9783;letter-spacing:3px}h1{font-size:46px;line-height:1.3}h2{margin-top:45px}article{padding:30px 40px;border:1px solid #dfe8da;background:#fff;border-radius:18px;margin:25px 0}b{color:#297e6e}a{color:#2d8978}li{margin:13px 0}code{background:#edf3e6;padding:4px 10px;border-radius:5px}footer{font-size:14px;color:#829486;margin-top:50px}</style><main><small>SKY COMMONS / FUTURE NEIGHBORHOODS</small><h1>晴空邻里<br>让每一次抵达，都有依据。</h1><p>面向未来城市的绿色低空共享服务交互平台 · 自主飞行协同版</p><article><h2>开始演示</h2><ol><li>先解压完整文件夹，双击<b>启动全部.cmd</b>。</li><li>打开<a href="http://127.0.0.1:19051/">网页工作台</a>，账号<code>admin</code>，密码<code>GreenFlight2026!</code>。</li><li>任选网页或桌面，依次点击：<b>连接模拟飞控 → 获取操控权 → 载入任务 → 飞前解锁 → 开始执行</b>。</li><li>观察起飞、航点跟踪、交付点悬停、返航与受控降落；在评价页回放记录。</li></ol><p>默认只绑定本机，无需开放公共网络。若弹出防火墙访问询问，本机演示可选择取消。</p></article><article><h2>软件与平台各自负责什么</h2><p>网页负责城市服务、任务管理、三维监控和评价；独立桌面软件提供遥测、操控、接管与航点上传；飞行服务独立于二者运行，经MAVLink连接模拟飞控或外部设备。</p><p><a href="docs/平台与飞行软件使用说明.txt">详细使用说明</a>　·　<a href="docs/无人机接入与验证边界.txt">无人机接入</a>　·　<a href="docs/系统架构与模块说明.txt">系统架构</a>　·　<a href="docs/技术来源与实现对照.txt">论文与专利技术来源</a></p></article><article><h2>看到的结果，对应什么验证</h2><p>已验证Windows本机与自建MAVLink模拟飞控链路。真实ArduCopter接口默认只读，需校准地图与坐标并逐机验证。当前没有官方SITL、硬件在环或实地无人机飞行验收。</p><p>模型、光伏功率和耗电均为研究假设，实物投送机构未接入。成功、保护落地及失败记录分别保留。</p></article><footer>原D盘项目保持原样。新版全部位于E盘独立文件夹。请先降落，再运行“停止本项目服务.cmd”。</footer></main></html>'''
 (R/'使用说明.html').write_text(page,encoding='utf-8')
 print('delivery docs written',len(docs)+6)
