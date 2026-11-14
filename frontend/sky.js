@@ -4,7 +4,47 @@ let flight=null,page='flight',timer=null,polling=false,lastLease=0,reports=[],re
 const phases={DISCONNECTED:'尚未连接',CONNECTING:'建立链路',CONNECTED:'链路就绪',READY:'任务就绪',ARMING:'等待飞控解锁',ARMED:'已解锁待执行',EXECUTING:'前往交付点并下降',DELIVERY_LANDING:'交付点着陆停桨',DELIVERY_RELEASING:'卸货与回执确认',DELIVERY_WAIT:'等待实物交付',DEPARTURE_ARMING:'交付后起飞准备',RETURNING:'自主返航',HOLD:'安全悬停',LANDING:'受控降落',COMPLETED:'配送闭环完成',STOPPED:'保护落地',MANUAL:'人工接管'};
 function toast(t){$('#toast').textContent=t;$('#toast').classList.add('show');clearTimeout(timer);timer=setTimeout(()=>$('#toast').classList.remove('show'),4500)}
 async function api(path,body){const r=await fetch(path,{method:body===undefined?'GET':'POST',headers:body===undefined?{}:{'Content-Type':'application/json'},body:body===undefined?undefined:JSON.stringify(body)});if(r.status===401){if(!$('#login').open)$('#login').showModal();throw Error('请登录平台')}const d=await r.json();if(!r.ok)throw Error(typeof d.detail==='string'?d.detail:JSON.stringify(d.detail||d));return d}
-async function act(cmd){let data={};if(cmd==='connect')data={endpoint:'udpout:127.0.0.1:18651'};if(cmd==='load')data={scenario:$('#scenario').value,seed:Number($('#seed').value),order_id:$('#order').value||null};if(cmd==='inject')data={fault:$('#fault').value};try{const r=await api('/api/autonomy/command',{command:cmd,data});toast(r.reason||'操作已接收');await poll()}catch(e){toast(e.message)}}
+let commandBusy=false,lastTasks=0,taskData={orders:[],tasks:[]};
+function feedback(text,error=false){$('#operation-title').textContent=error?'操作未执行':'操作反馈';$('#operation-message').textContent=text;$('.operation-notice').dataset.error=String(error);toast(text)}
+async function act(cmd,extra={}){
+ const protective=['hold','land','manual'];if(commandBusy&&!protective.includes(cmd)){feedback('正在等待上一项操作回执，请勿重复点击。');return}
+ let data={...extra};
+ if(cmd==='connect')data={endpoint:'udpout:127.0.0.1:18751'};
+ if(['load','preview_order'].includes(cmd))data={scenario:$('#scenario').value,seed:Number($('#seed').value),order_id:$('#order').value||null};
+ if(cmd==='preview_order'&&!data.order_id){feedback('请先选择一笔共享订单；独立模拟任务不占用库存。',true);return}
+ if(cmd==='inject')data={fault:$('#fault').value};
+ commandBusy=true;updateControls();feedback('正在处理，请等待服务回执…');
+ try{const r=await api('/api/autonomy/command',{command:cmd,data});
+  if(cmd==='preview_order'){renderPreview(r);$('#order-preview').scrollIntoView({behavior:'smooth',block:'center'})}
+  const messages={connect:'连接请求已发送，等待飞控心跳与定位；连接建立后获取操控权。',lease:'已获取网页操控权；可以预检并载入订单。',release:'已释放网页操控权，可在桌面软件接管。',preview_order:'方案预检通过；尚未占用库存或发出飞行指令。'};
+  feedback(r.reason||messages[cmd]||'命令已受理，请结合飞行状态确认实际执行结果。');lastTasks=0;await poll();await refreshTasks();
+ }catch(e){feedback(e.message,true)}finally{commandBusy=false;updateControls()}
+}
+function updateControls(){
+ const f=flight,t=f?.telemetry||{},fresh=!!t.position&&(f.ages.heartbeat??99)<1;
+ for(const b of $$('[data-cmd]')){const c=b.dataset.cmd;let why='';
+  if(commandBusy&&!['hold','land','manual'].includes(c))why='正在等待操作回执';
+  else if(!f&&c!=='lease'&&c!=='connect')why='等待飞行服务状态';
+  else if(c==='connect'&&(t.armed||f?.business_task))why='需先结束当前任务';
+  else if(['load','arm','start','reset_fault','inject'].includes(c)&&f?.lease!=='web')why='请先获取网页操控权';
+  else if(['load','arm','start','hold','land','rtl','manual'].includes(c)&&!fresh)why='请等待新鲜遥测';
+  else if(c==='load'&&(t.armed||f?.business_task))why='当前任务正在占用通道，不能重复载入';
+  else if(c==='arm'&&f?.phase!=='READY')why='先载入任务，再进行飞前检查';
+  else if(c==='start'&&!['ARMED','HOLD'].includes(f?.phase))why='等待飞控确认解锁';
+  else if(['hold','rtl','manual'].includes(c)&&!t.armed)why='当前未解锁，无需空中操作';
+  b.disabled=!!why;b.title=why;
+ }
+}
+function renderPreview(p){const s=p.selected;$('#order-preview').innerHTML=`<strong>${esc(p.order_id)} · ${esc(p.product)} × ${p.quantity} → ${esc(p.address)}</strong><p>建议 ${esc(s.station_name)} / ${esc(s.drone_id)} · 载荷 ${p.weight_kg} kg · 往返 ${s.roundtrip_m} m · 预计 ${s.estimated_wh} Wh</p><div class="plan-candidates">${p.candidates.map(c=>`<span>${esc(c.station_name)}：${esc(c.reason)}${c.eligible?' / '+c.estimated_wh+' Wh':''}</span>`).join('')}</div><small>${esc(p.basis)}。${esc(p.coordinate_note)}</small>`}
+async function refreshTasks(){
+ try{taskData=await api('/api/autonomy/tasks');lastTasks=Date.now();const selected=$('#order').value;const opened=new Set($$('#task-list details[open]').map(d=>d.closest('.task-record').dataset.run));
+ $('#order').replaceChildren(new Option('独立模拟任务',''));for(const o of taskData.orders)$('#order').append(new Option(o.id+' · '+o.address,o.id));const current=taskData.tasks.find(t=>!['COMPLETED','CANCELLED','RECOVERED'].includes(t.phase));if(current&&!taskData.orders.some(o=>o.id===current.order_id))$('#order').append(new Option(current.order_id+' · 当前执行任务',current.order_id));if([...$('#order').options].some(o=>o.value===selected))$('#order').value=selected;else if(current)$('#order').value=current.order_id;
+ $('#task-list').innerHTML=taskData.tasks.slice(0,8).map(t=>`<div data-run="${esc(t.run_id)}" class="task-record ${['STOPPED','INTERRUPTED'].includes(t.phase)?'exception':''}"><strong>${esc(t.order_id)} · ${esc(phases[t.phase]||({INTERRUPTED:'服务中断待核对',CANCELLED:'准备任务已取消',RECOVERED:'已核对恢复'}[t.phase])||t.phase)}</strong><small>任务 ${esc(t.run_id)} / ${esc(t.plan.selected.station_name)} / ${esc(t.drone_id)} · 控制端 ${esc(t.owner||'空闲')}</small><p>${esc(t.reason)}</p><small>交付：${t.delivered?'模拟反馈已确认':'尚未确认'}　库存：${esc({reserved:'已预占',consumed:'已交付消耗',restored:'已释放返库'}[t.stock])} · ${new Date(t.updated_at*1000).toLocaleString()}</small>${t.phase==='READY'?`<button class="outline" data-task-cancel="${esc(t.run_id)}">取消准备任务并释放资源</button>`:''}${['STOPPED','INTERRUPTED'].includes(t.phase)?`<button class="outline" data-task-recover="${esc(t.run_id)}">核对飞机与货物</button>`:''}<details ${opened.has(t.run_id)?'open':''}><summary>查看执行阶段记录</summary><ol>${t.history.map(h=>`<li>${new Date(h.time*1000).toLocaleTimeString()} · ${esc(phases[h.phase]||h.phase)} · ${esc(h.reason)}</li>`).join('')}</ol></details></div>`).join('')||'暂无订单飞行任务。选择订单预检并载入后，这里将持续记录执行阶段。';
+ $$('[data-task-cancel]').forEach(b=>b.onclick=()=>act('cancel_task',{run_id:b.dataset.taskCancel}));
+ $$('[data-task-recover]').forEach(b=>b.onclick=()=>{const note=prompt('仅在已核对飞机返站和货物去向后填写说明。未交付货物将恢复可用库存；飞机转维护待检查。');if(note)act('recover_task',{run_id:b.dataset.taskRecover,note})});
+ }catch(e){$('#task-list').textContent=e.message}
+}
+$('#refresh-tasks').onclick=refreshTasks;
 $$('[data-cmd]').forEach(b=>b.addEventListener('click',()=>act(b.dataset.cmd)));
 $$('nav [data-page]').forEach(b=>b.onclick=()=>{page=b.dataset.page;$$('.page').forEach(el=>el.classList.toggle('active',el.id==='page-'+page));$$('nav [data-page]').forEach(el=>el.classList.toggle('active',el===b));$('#crumb').textContent=b.textContent.slice(2).trim();if(flight)renderDetails();if(page==='sources')loadSources();if(page==='testing')loadReports();window.dispatchEvent(new Event('resize'))});
 $('#login-form').onsubmit=async e=>{e.preventDefault();try{await api('/api/login',{username:$('#username').value,password:$('#password').value});$('#login').close();$('#login-error').textContent='';await initialize()}catch(err){$('#login-error').textContent=err.message}};
@@ -13,8 +53,8 @@ $('#export').onclick=async()=>{try{const d=await api('/api/autonomy/state');down
 function download(obj,name){const u=URL.createObjectURL(new Blob([JSON.stringify(obj,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),5000)}
 $('#cloud').onchange=async()=>{try{await api('/api/autonomy/command',{command:'cloud',data:{enabled:$('#cloud').checked}});poll()}catch(e){toast(e.message)}};
 $('#lang').onclick=()=>{english=!english;$('#title').textContent=english?'A shared city. A considered flight.':'让每一次抵达，都有依据。';$('#subtitle').textContent=english?'From a neighborhood need to supervised autonomous delivery and return.':'从社区的一份共享需求，到无人机自主执行与安全返航。';$('#crumb').textContent=english?({flight:'Flight workbench',perception:'Perception',planning:'Planning & control',safety:'Safety & takeover',edge:'Onboard & edge',testing:'Evaluation & replay',sources:'Research provenance'}[page]):$('nav [data-page="'+page+'"]').textContent.slice(2).trim();document.documentElement.lang=english?'en':'zh-CN'};
-async function initialize(){try{const me=await api('/api/me');if(me.role!=='admin'){toast('飞行控制需管理员账号，居民请进入社区服务');return}const state=await api('/api/state');$('#order').replaceChildren(new Option('独立模拟任务',''));for(const o of state.orders.filter(o=>o.status==='pending'))$('#order').append(new Option(o.id+' · '+o.address,o.id));await poll();if(flight)$('#scenario').value=flight.scenario.id}catch(e){if(!/请登录/.test(e.message))toast(e.message)}}
-async function poll(){if(polling||$('#login').open)return;polling=true;try{flight=await api('/api/autonomy/state');render();if(flight.lease==='web'&&Date.now()-lastLease>5000){lastLease=Date.now();await api('/api/autonomy/command',{command:'lease',data:{}})}}catch(e){$('#rail-status').textContent='服务未连接';$('#reason').textContent=e.message}finally{polling=false}}
+async function initialize(){try{const me=await api('/api/me');if(me.role!=='admin'){toast('飞行控制需管理员账号，居民请进入社区服务');return}const state=await api('/api/state');$('#order').replaceChildren(new Option('独立模拟任务',''));for(const o of state.orders.filter(o=>o.status==='pending'))$('#order').append(new Option(o.id+' · '+o.address,o.id));await poll();if(flight)$('#scenario').value=flight.scenario.id;const requested=new URLSearchParams(location.search).get('order');if(requested)$('#order').value=requested;await refreshTasks();if(requested)$('#order').value=requested}catch(e){if(!/请登录/.test(e.message))toast(e.message)}}
+async function poll(){if(polling||$('#login').open)return;polling=true;try{flight=await api('/api/autonomy/state');render();updateControls();if(Date.now()-lastTasks>3000)await refreshTasks();if(flight.lease==='web'&&Date.now()-lastLease>5000){lastLease=Date.now();await api('/api/autonomy/command',{command:'lease',data:{}})}}catch(e){$('#rail-status').textContent='服务未连接';$('#reason').textContent=e.message;flight=null;updateControls()}finally{polling=false}}
 function render(){const f=flight,t=f.telemetry||{},p=t.position||[0,0,0],v=t.velocity||[0,0,0];$('#phase').textContent=phases[f.phase]||f.phase;$('#scene-caption').textContent=f.scenario.name+' · 轨迹来自飞控遥测；三维设备放大显示。';$('#reason').textContent=f.reason;$('#alt').textContent=p[2].toFixed(1);$('#position').textContent=`N ${p[0].toFixed(1)} / E ${p[1].toFixed(1)} m`;$('#speed').textContent=Math.hypot(...v).toFixed(2);$('#battery').textContent=`剩余电量 ${(t.battery||0).toFixed(1)}% · ${t.armed?'已解锁':'未解锁'}`;$('#interventions').textContent=f.stats.guard_interventions;$('#freshness').textContent=`心跳 ${f.ages.heartbeat??'—'}s / 感知 ${f.ages.sensor??'—'}s`;$('#mode').textContent=f.simulation?'本机模拟飞控':'外部飞控 · '+f.real_control;$('#lease').textContent='控制权：'+({web:'网页',desktop:'桌面',test:'测试'}[f.lease]||'空闲');$('#rail-status').textContent=f.telemetry?'飞行进程在线':'飞行进程待连接';$('#energy').textContent=f.energy.estimated_wh?`单程估算 ${f.energy.distance_m}m · 净耗电 ${f.energy.estimated_wh}Wh，其中光伏辅助约 ${f.energy.solar_wh}Wh。参数未实测标定。`:'载入任务后显示能源预算';$('#step0').classList.toggle('done',!!f.route.length);$('#step1').classList.toggle('done',!!t.armed||f.delivered);$('#step2').classList.toggle('done',f.delivered);$('#step3').classList.toggle('done',f.returning||f.phase==='COMPLETED');if(!replayTimer)window.dispatchEvent(new CustomEvent('flight-state',{detail:f}));drawMap($('#map2d'),f);renderDetails()}
 function row(title,text,bad=false){return `<div class="record"><b class="${bad?'bad':''}">${esc(title)}</b><small>${esc(text)}</small></div>`}
 function renderDetails(){const f=flight;if(!f)return;const t=f.telemetry||{};
