@@ -1,0 +1,23 @@
+const {chromium}=require('playwright');
+const fs=require('fs');
+(async()=>{
+ const browser=await chromium.launch({headless:true,channel:'msedge'});
+ const context=await browser.newContext({viewport:{width:1500,height:1000}});
+ const page=await context.newPage(),errors=[];
+ page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('http://127.0.0.1:19051/');
+ await page.locator('#password').fill('GreenFlight2026!');await page.locator('#login-form button').click();
+ await page.waitForFunction(()=>!document.querySelector('#login').open);
+ await page.locator('[data-page="safety"]').click();
+ await page.waitForFunction(()=>document.querySelector('#loop-timing').textContent.includes('P95'));
+ await page.screenshot({path:'reports/safety-v2.png',fullPage:true});
+ await page.locator('[data-page="testing"]').click();
+ const link=page.locator('a[href="/api/autonomy/evaluation/view"]');
+ if(!(await link.isVisible()))throw Error('Evaluation entry missing');
+ const report=await page.context().newPage();await report.goto('http://127.0.0.1:19051/api/autonomy/evaluation/view');
+ await report.screenshot({path:'reports/evaluation-v2.png',fullPage:false});
+ if(!(await report.textContent('body')).includes('未达预期'))throw Error('Missing failures');
+ if(errors.length)throw Error(errors.join(';'));
+ fs.writeFileSync('reports/safety-ui-check.json',JSON.stringify({passed:true,checks:['safety explanation','period statistics','authenticated evaluation report','failures retained','no page errors'],errors},null,2));
+ console.log('PASS',5);await browser.close();
+})().catch(e=>{console.error(e);process.exit(1)});

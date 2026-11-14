@@ -12,7 +12,7 @@ def safe_segment(a,b,s):
     n=max(2,math.ceil(distance(a,b)/.5))
     return all(safe_point([a[j]+(b[j]-a[j])*i/n for j in range(3)],s) for i in range(n+1))
 
-def astar(start,goal,s,altitude=None):
+def astar(start,goal,s,altitude=None,simplify=True):
     if not finite_vector(goal) or not safe_point(goal,s):raise ValueError('目标越界或位于障碍缓冲区')
     z=altitude or max(12.,goal[2]);a=[start[0],start[1],z];b=[goal[0],goal[1],z]
     if not safe_segment(start,a,s) or not safe_point(b,s):raise ValueError('起降走廊不可达')
@@ -47,7 +47,7 @@ def astar(start,goal,s,altitude=None):
         j=len(raw)-1
         while j>i+1 and not safe_segment(raw[i],raw[j],s):j-=1
         compact.append(raw[j]);i=j
-    route=[list(start)]+compact+[list(goal)]
+    route=[list(start)]+(compact if simplify else raw)+[list(goal)]
     route=[p for i,p in enumerate(route) if i==0 or distance(p,route[i-1])>.05]
     if not all(safe_segment(x,y,s) for x,y in zip(route,route[1:])):raise ValueError('路径复核失败')
     return route

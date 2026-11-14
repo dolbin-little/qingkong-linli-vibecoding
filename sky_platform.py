@@ -12,6 +12,12 @@ from autonomy.engine import ROOT
 app.title='晴空邻里 · 自主飞行与未来城市共享服务'
 app.version='3.0.0'
 
+@app.get('/api/autonomy/evaluation/view')
+def evaluation_view(u=Depends(admin)):
+    p=ROOT/'reports/evaluation.html'
+    if not p.exists():raise HTTPException(404,'尚未生成评测，运行 tools/benchmark.py')
+    return FileResponse(p,media_type='text/html')
+
 class FlightCommand(BaseModel):
     command:str=Field(min_length=1,max_length=40)
     data:dict=Field(default_factory=dict)
