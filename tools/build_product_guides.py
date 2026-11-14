@@ -222,5 +222,5 @@ def build(name,sections):
  print(dest,flush=True)
 build('晴空邻里_项目介绍_20261114',intro)
 build('晴空邻里_全界面与按钮使用说明_20261114',manual)
-(OUT/'说明内容源稿.json').write_text(json.dumps({'introduction':intro,'manual':manual},ensure_ascii=False,indent=2),encoding='utf8')
+(OUT/'说明内容源稿.json').write_text(json.dumps({'introduction':intro,'manual':manual},ensure_ascii=False,indent=2),encoding='utf8',newline='\n')
 print('sections',len(intro),len(manual))
