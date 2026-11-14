@@ -8,6 +8,7 @@ __pycache__/
 *.pyc
 config/*.key
 .env
+tmp/
 *.zip
 
 third_party/ardupilot_sitl/*
