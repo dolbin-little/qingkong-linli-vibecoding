@@ -9,3 +9,7 @@ __pycache__/
 config/*.key
 .env
 *.zip
+
+third_party/ardupilot_sitl/*
+!third_party/ardupilot_sitl/manifest.json
+!third_party/ardupilot_sitl/SOURCE.txt

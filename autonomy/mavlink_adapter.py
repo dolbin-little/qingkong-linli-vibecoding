@@ -23,7 +23,7 @@ class EphemeralUDP(mavutil.mavfile):
 class MAVLinkAdapter:
     def __init__(self,endpoint='udpout:127.0.0.1:18751',baud=115200,position_offset=None):
         if not isinstance(endpoint,str) or len(endpoint)>180:raise ValueError('连接地址无效')
-        self.endpoint=endpoint;self.position_offset=position_offset or [0.,0.,0.];self.streams_requested=False;self.link=EphemeralUDP(endpoint) if endpoint.startswith('udpout:') else mavutil.mavlink_connection(endpoint,baud=baud,source_system=245,source_component=190,dialect='ardupilotmega');self.t=Telemetry();self.last_gcs=0.;self.acks=[];self.pending={};self.autopilot=None;self.sys=1;self.comp=1;self.received=0;self.sent=0;self.armed_confirmed=False;self.observation={};self.detection=None
+        self.endpoint=endpoint;self.position_offset=position_offset or [0.,0.,0.];self.streams_requested=False;self.link=EphemeralUDP(endpoint) if endpoint.startswith('udpout:') else mavutil.mavlink_connection(endpoint,baud=baud,source_system=245,source_component=190,dialect='ardupilotmega');self.t=Telemetry();self.last_gcs=0.;self.acks=[];self.pending={};self.autopilot=None;self.sys=1;self.comp=1;self.received=0;self.sent=0;self.armed_confirmed=False;self.observation={};self.detection=None;self.status_texts=[];self.version=None
     def close(self):self.link.close()
     def poll(self,now):
         if now-self.last_gcs>1:
@@ -54,6 +54,9 @@ class MAVLinkAdapter:
                 if name in ('DYN_N','DYN_E','DYN_U') and math.isfinite(m.value):
                     self.observation[name]=(m.value,now)
                     if len(self.observation)==3 and all(now-v[1]<.15 for v in self.observation.values()):self.detection={'id':'SIM-DYNAMIC','position':[self.observation[k][0] for k in ('DYN_N','DYN_E','DYN_U')],'radius':2.,'at':now}
+            elif kind=='STATUSTEXT':
+                self.status_texts.append({'at':now,'severity':m.severity,'text':m.text});self.status_texts=self.status_texts[-80:]
+            elif kind=='AUTOPILOT_VERSION':self.version=m.to_dict()
             elif kind=='COMMAND_ACK':
                 self.acks.append({'command':m.command,'result':m.result,'accepted':m.result==0,'at':now});self.acks=self.acks[-40:];self.pending.pop(m.command,None)
             self.received+=1
@@ -69,6 +72,9 @@ class MAVLinkAdapter:
     def disarm(self):
         if self.t.position[2]>.3:raise ValueError('禁止在空中解除电机')
         self.command(mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,0)
+    def takeoff(self,altitude):
+        if not math.isfinite(altitude) or not 1<=altitude<=35:raise ValueError('起飞高度必须在1至35米内')
+        self.command(mavutil.mavlink.MAV_CMD_NAV_TAKEOFF,0,0,0,0,0,0,altitude)
     def land(self):self.command(mavutil.mavlink.MAV_CMD_NAV_LAND)
     def release_payload(self):
         if self.endpoint!='udpout:127.0.0.1:18751':raise ValueError('真实投放机构尚未适配，禁止发送模拟机构命令')

@@ -1,0 +1,86 @@
+[
+  {
+    "name": "ArduCopter.exe",
+    "url": "https://firmware.ardupilot.org/Tools/MissionPlanner/sitl/Stable/ArduCopter.elf",
+    "bytes": 10997765,
+    "sha256": "916f59a820bd9ac3b19bc937a12661942c46350acaddb71e61c3e45c86b703fa"
+  },
+  {
+    "name": "cygatomic-1.dll",
+    "url": "https://firmware.ardupilot.org/Tools/MissionPlanner/sitl/Stable/cygatomic-1.dll",
+    "bytes": 89614,
+    "sha256": "87f4cf57db1befe777b3e22e3cc4e81b2dbcff386a587e7f3d265f706340bb15"
+  },
+  {
+    "name": "cyggcc_s-1.dll",
+    "url": "https://firmware.ardupilot.org/Tools/MissionPlanner/sitl/Stable/cyggcc_s-1.dll",
+    "bytes": 111118,
+    "sha256": "002738f3cf6e984a8454af4204dd55d65780664d0fca8b4971a8f1e6c85ccd73"
+  },
+  {
+    "name": "cyggcc_s-seh-1.dll",
+    "url": "https://firmware.ardupilot.org/Tools/MissionPlanner/sitl/Stable/cyggcc_s-seh-1.dll",
+    "bytes": 142867,
+    "sha256": "f9a352fa9215ceb9a35b67ef8c7f178906a9dcc40b3819182b63f93fecb4faea"
+  },
+  {
+    "name": "cyggomp-1.dll",
+    "url": "https://firmware.ardupilot.org/Tools/MissionPlanner/sitl/Stable/cyggomp-1.dll",
+    "bytes": 159261,
+    "sha256": "46b4dd8bbc76ea82b50ac3f70397cd295896e23ae4bf0a1a7a013769599bf00c"
+  },
+  {
+    "name": "cygiconv-2.dll",
+    "url": "https://firmware.ardupilot.org/Tools/MissionPlanner/sitl/Stable/cygiconv-2.dll",
+    "bytes": 1104915,
+    "sha256": "aea0d69478b5b07647fd83e77d586673f9eba5e63420c6fdfd350d013806bba8"
+  },
+  {
+    "name": "cygintl-8.dll",
+    "url": "https://firmware.ardupilot.org/Tools/MissionPlanner/sitl/Stable/cygintl-8.dll",
+    "bytes": 108051,
+    "sha256": "393b6a5b3058e19e0c4b024866fa124b4a0e85f5b1aaf62e984f840e17722de8"
+  },
+  {
+    "name": "cygquadmath-0.dll",
+    "url": "https://firmware.ardupilot.org/Tools/MissionPlanner/sitl/Stable/cygquadmath-0.dll",
+    "bytes": 509966,
+    "sha256": "75c70089e945bb5530eff463391383d6edc125b0b992ea29769a71c371d8c88e"
+  },
+  {
+    "name": "cygssp-0.dll",
+    "url": "https://firmware.ardupilot.org/Tools/MissionPlanner/sitl/Stable/cygssp-0.dll",
+    "bytes": 10766,
+    "sha256": "d32da41f13052d0fe4ee3fa1be11823425a8a73d1979df5a4e55280539009133"
+  },
+  {
+    "name": "cygstdc++-6.dll",
+    "url": "https://firmware.ardupilot.org/Tools/MissionPlanner/sitl/Stable/cygstdc++-6.dll",
+    "bytes": 2316819,
+    "sha256": "7953c47c65f2c584e7add785662f507b2da5511e02f12deed7c260925b23131f"
+  },
+  {
+    "name": "cygwin1.dll",
+    "url": "https://firmware.ardupilot.org/Tools/MissionPlanner/sitl/Stable/cygwin1.dll",
+    "bytes": 3246645,
+    "sha256": "ed9d5379061e5de79c3375cc62246c2142ea1c97d94f4d16bfbea6fb1b7fc889"
+  },
+  {
+    "name": "git.txt",
+    "url": "https://firmware.ardupilot.org/Tools/MissionPlanner/sitl/Stable/git.txt",
+    "bytes": 223,
+    "sha256": "0a964875da4006a22b21c9b28a3a12079bfa876eb6c61e28b872acba7b47dc79"
+  },
+  {
+    "name": "copter.parm",
+    "url": "https://raw.githubusercontent.com/ArduPilot/ardupilot/master/Tools/autotest/default_params/copter.parm",
+    "bytes": 1957,
+    "sha256": "5e01345b45d1c6190b28bece5638bbdd4cf1cce35e05bbbf480ab24d2b51aa0e"
+  },
+  {
+    "name": "LICENSE.txt",
+    "url": "https://raw.githubusercontent.com/ArduPilot/ardupilot/master/COPYING.txt",
+    "bytes": 35147,
+    "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+  }
+]
