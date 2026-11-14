@@ -38,7 +38,9 @@ def architecture():
  d=Drawing(480,255)
  items=[(70,210,'社区网页'),(395,210,'桌面控制台'),(70,115,'FastAPI / SQLite'),(315,115,'独立飞行服务'),(315,20,'MAVLink模拟飞控')]
  for x,y,t in items:
-  d.add(Circle(x,y,7,fillColor=TEAL,strokeColor=white));d.add(String(x-50,y+18,t,fontName=F,fontSize=12,fillColor=GREEN))
+  d.add(Circle(x,y,7,fillColor=TEAL,strokeColor=white))
+  tx,ty=(x+16,y+4) if x==315 else (x-50,y+18)
+  d.add(String(tx,ty,t,fontName=F,fontSize=12,fillColor=GREEN))
  for a,b in [((70,200),(70,130)),((80,207),(300,125)),((390,200),(325,130)),((95,115),(299,115)),((315,100),(315,35))]:d.add(Line(*a,*b,strokeColor=GOLD,strokeWidth=2))
  d.add(String(155,78,'命令 / 状态 / 业务同步',fontName=F,fontSize=10,fillColor=INK))
  d.add(String(330,62,'遥测与回执',fontName=F,fontSize=10,fillColor=INK))
