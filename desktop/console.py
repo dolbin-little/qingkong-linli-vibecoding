@@ -31,7 +31,7 @@ class Console:
         self.phase=tk.Label(left,text='等待连接',font=('Microsoft YaHei',20,'bold'),bg='#e3efeb',fg='#1c7167',wraplength=300);self.phase.pack(fill='x',padx=14,pady=14)
         self.metrics=tk.Label(left,text='',font=('Consolas',11),justify='left',anchor='nw',bg='white',fg='#28505b');self.metrics.pack(fill='x',padx=16,pady=6)
         controls=tk.Frame(left,bg='white');controls.pack(fill='x',padx=12,pady=10)
-        for index,(text,cmd) in enumerate([('人工接管','manual'),('释放操控权','release'),('故障复位','reset_fault'),('接入其他飞控','real'),('上传全球航点','upload'),('允许真实写控制','confirm_real'),('保存运行报告','export')]):ttk.Button(controls,text=text,command=lambda c=cmd:self.act(c)).grid(row=index//2,column=index%2,sticky='ew',padx=2,pady=3)
+        for index,(text,cmd) in enumerate([('人工接管','manual'),('释放操控权','release'),('故障复位','reset_fault'),('接入其他飞控','real'),('上传全球航点','upload'),('允许真实写控制','confirm_real'),('保存运行报告','export'),('使用说明','help')]):ttk.Button(controls,text=text,command=lambda c=cmd:self.act(c)).grid(row=index//2,column=index%2,sticky='ew',padx=2,pady=3)
         controls.columnconfigure(0,weight=1);controls.columnconfigure(1,weight=1)
         self.fault=ttk.Combobox(controls,values=['clear','sensor','link','gps','battery','ack_loss','payload'],state='readonly');self.fault.set('sensor');self.fault.grid(row=4,column=0,columnspan=2,sticky='ew',pady=(8,3));ttk.Button(controls,text='模拟器故障注入',command=lambda:self.act('inject')).grid(row=5,column=0,columnspan=2,sticky='ew')
         self.canvas=tk.Canvas(body,bg='#f7faf7',highlightthickness=0);self.canvas.pack(side='left',fill='both',expand=True);self.canvas.bind('<Configure>',lambda e:self.draw())
@@ -71,9 +71,18 @@ class Console:
             if not path:return
             try:data={'items':json.loads(Path(path).read_text(encoding='utf-8'))}
             except Exception as e:return self.show(str(e))
+        elif cmd=='help':
+            import webbrowser
+            path=Path(__file__).resolve().parents[1]/'output/产品介绍与操作手册/晴空邻里_全界面与按钮使用说明_20261114.html'
+            if path.is_file():webbrowser.open(path.as_uri())
+            else:self.show('本副本缺少使用说明，请使用完整交付包。')
+            return
         elif cmd=='export':
             path=filedialog.asksaveasfilename(defaultextension='.json',initialfile='晴空邻里飞行报告.json')
-            if path and self.state:Path(path).write_text(json.dumps(self.state,ensure_ascii=False,indent=2),encoding='utf-8');self.show('报告已保存')
+            if path:
+                try:
+                    record=rpc('/record');Path(path).write_text(json.dumps(record,ensure_ascii=False,indent=2),encoding='utf-8');self.show('已保存完整保留窗口报告（最长约10分钟）')
+                except Exception as e:self.show('报告未保存：'+str(e))
             return
         self.show('正在处理操作，等待服务回执…');self.busy=True
         def work():

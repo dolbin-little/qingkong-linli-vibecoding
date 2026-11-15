@@ -43,7 +43,7 @@ async def flight_command(body:FlightCommand,u=Depends(admin)):
 
 @app.get('/api/autonomy/export')
 async def export(u=Depends(admin)):
-    try:r=await asyncio.to_thread(rpc,'/state')
+    try:r=await asyncio.to_thread(rpc,'/record')
     except Exception as e:raise HTTPException(503,str(e))
     return Response(json.dumps(r,ensure_ascii=False,indent=2),media_type='application/json',headers={'Content-Disposition':'attachment; filename="sky-flight-report.json"'})
 
@@ -64,3 +64,11 @@ def reports(u=Depends(admin)):
 async def flight_tasks(u=Depends(admin)):
     try:return await asyncio.to_thread(rpc,'/command',{'command':'tasks','data':{},'owner':'web'},8)
     except Exception as e:raise HTTPException(503,str(e))
+
+@app.get('/help/{kind}')
+def product_help(kind:str):
+    names={'manual':'晴空邻里_全界面与按钮使用说明_20261114.html','intro':'晴空邻里_项目介绍_20261114.html'}
+    if kind not in names:raise HTTPException(404,'说明页面不存在')
+    path=ROOT/'output/产品介绍与操作手册'/names[kind]
+    if not path.is_file():raise HTTPException(404,'本副本缺少说明文件，请使用完整交付包')
+    return FileResponse(path,media_type='text/html')
