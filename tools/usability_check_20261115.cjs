@@ -7,6 +7,8 @@ const fs=require('fs');
  page.on('pageerror',e=>errors.push(e.message));
  await page.goto('http://127.0.0.1:19051/');await page.locator('#password').fill('GreenFlight2026!');await page.locator('#login-form button').click();
  await page.waitForFunction(()=>!document.querySelector('#login').open);
+ await page.waitForFunction(()=>document.querySelector('#rail-status').textContent!=='独立飞行服务待连接');
+ if((await page.locator('#phase').textContent())==='尚未连接'){if(await page.locator('#battery').textContent()!=='电量待回传')throw Error('Missing telemetry shown as zero battery');checks.push('missing telemetry placeholder');}
  for(const kind of ['manual','intro']){
   const a=page.locator(`a[href="/help/${kind}"]`);if(!await a.isVisible())throw Error('Missing '+kind);
   const response=await context.request.get('http://127.0.0.1:19051/help/'+kind);if(!response.ok())throw Error('Help response');checks.push(kind+' entry and document');
