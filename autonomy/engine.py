@@ -316,12 +316,20 @@ class FlightEngine:
                 self.model_score=self.monitor.score([norm(t.velocity)/3,t.battery/100,max(0,min(5,now-t.position_at))],None)
                 if self.run_id:
                     with (self.root/'logs'/f'trace-{self.run_id}.jsonl').open('a',encoding='utf-8') as f:f.write(json.dumps(self.trace[-1],ensure_ascii=False)+'\n')
+    def record(self):
+        with self.lock:
+            result=self.snapshot()
+            result['trace']=[{**row,'p':row['p'][:],'v':row['v'][:]} for row in self.trace]
+            result['trace_retention_max_samples']=3000
+            result['retained_duration_seconds']=round(self.trace[-1]['t']-self.trace[0]['t'],3) if len(self.trace)>1 else 0.
+            result['trace_scope']='full_retained_window'
+            return result
     def snapshot(self,now=None):
         now=now or time.monotonic()
         with self.lock:
             t=self.adapter.t if self.adapter else None
             ages={'heartbeat':round(max(0,now-t.heartbeat_at),2),'position':round(max(0,now-t.position_at),2),'sensor':round(max(0,now-t.sensor_at),2)} if t else {}
-            return {'name':'晴空邻里','phase':self.phase,'reason':self.reason,'simulation':self.simulation,'telemetry':t.dump() if t else None,'ages':ages,'scenario':self.s,'route':self.route,'waypoint':self.index,'returning':self.returning,'delivered':self.delivered,'delivery':{'status':getattr(self,'delivery_status','PENDING'),'label':DELIVERY_TEXT.get(getattr(self,'delivery_status','PENDING'),'等待到达'),'mode':'landed_release','height_m':0,'simulation':self.simulation},'fault':self.fault,'lease':self.lease if now-self.lease_at<20 else None,'stats':{**self.stats,'timing':self.timing.dump()},'safety_status':describe(self.fault,self.phase,not self.can_control()),'events':[e for e in self.events if e.get('run_id')==self.run_id][:25],'acks':self.adapter.acks[-12:] if self.adapter else [],'pending':list(self.adapter.pending) if self.adapter else [],'traffic':{'received':self.adapter.received,'sent':self.adapter.sent} if self.adapter else {},'tracks':list(self.tracker.tracks.values()),'anomaly':self.model_score,'edge':offload(cloud=self.cloud),'critical_compute':offload(priority=3,cloud=self.cloud,deadline_ms=70),'audit':{'flight_head':self.audit.head,'flight_count':self.audit.count,'edge_head':self.edge.head,'verified':AuditChain.verify(self.audit.path)},'trace':self.trace[-300:],'run_id':self.run_id,'started':self.started,'finished':self.finished,'energy':energy_budget(self.route) if self.route else {},'order_id':self.order_id,'business_task':self.task,'real_control':'只读' if not getattr(self,'live_confirmed',False) else '已在本机确认'}
+            return {'name':'晴空邻里','phase':self.phase,'reason':self.reason,'simulation':self.simulation,'telemetry':t.dump() if t else None,'ages':ages,'scenario':self.s,'route':self.route,'waypoint':self.index,'returning':self.returning,'delivered':self.delivered,'delivery':{'status':getattr(self,'delivery_status','PENDING'),'label':DELIVERY_TEXT.get(getattr(self,'delivery_status','PENDING'),'等待到达'),'mode':'landed_release','height_m':0,'simulation':self.simulation},'fault':self.fault,'lease':self.lease if now-self.lease_at<20 else None,'stats':{**self.stats,'timing':self.timing.dump()},'safety_status':describe(self.fault,self.phase,not self.can_control()),'events':[e for e in self.events if e.get('run_id')==self.run_id][:25],'acks':self.adapter.acks[-12:] if self.adapter else [],'pending':list(self.adapter.pending) if self.adapter else [],'traffic':{'received':self.adapter.received,'sent':self.adapter.sent} if self.adapter else {},'tracks':list(self.tracker.tracks.values()),'anomaly':self.model_score,'edge':offload(cloud=self.cloud),'critical_compute':offload(priority=3,cloud=self.cloud,deadline_ms=70),'audit':{'flight_head':self.audit.head,'flight_count':self.audit.count,'edge_head':self.edge.head,'verified':self.audit.verified()},'trace':self.trace[-300:],'run_id':self.run_id,'started':self.started,'finished':self.finished,'energy':energy_budget(self.route) if self.route else {},'order_id':self.order_id,'business_task':self.task,'real_control':'只读' if not getattr(self,'live_confirmed',False) else '已在本机确认'}
     def loop(self):
         while self.running:
             start=time.monotonic()

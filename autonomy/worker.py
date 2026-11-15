@@ -22,6 +22,7 @@ def serve(port=19052):
             if self.path=='/health':return self.reply(200,{'status':'ok','role':'flight-worker','real_control_default':False})
             if not self.authenticated():return self.reply(401,{'error':'需要本机控制凭据'})
             if self.path=='/state':return self.reply(200,engine.snapshot())
+            if self.path=='/record':return self.reply(200,engine.record())
             if self.path=='/shutdown':return self.reply(405,{'error':'使用本项目停止脚本'})
             return self.reply(404,{'error':'不存在'})
         def do_POST(self):

@@ -1,5 +1,5 @@
 """Explicit method transfers, not reproductions of the cited learned models/patent systems."""
-import json,hashlib,math,statistics
+import json,hashlib,math,statistics,threading
 from pathlib import Path
 
 def canonical(obj):return json.dumps(obj,ensure_ascii=False,sort_keys=True,separators=(',',':'),allow_nan=False)
@@ -11,21 +11,37 @@ class AuditChain:
             if not self.verify(self.path):raise ValueError('审计记录校验失败，请保留现场并核查日志')
             rows=[json.loads(x) for x in self.path.read_text(encoding='utf-8').splitlines() if x.strip()]
             if rows:self.head=rows[-1]['hash'];self.count=rows[-1]['seq']
+        self.lock=threading.RLock();self.expected=self.stamp();self.checked=self.expected;self.valid=True
+    def stamp(self):
+        try:
+            s=self.path.stat();return (s.st_dev,s.st_ino,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
+        except FileNotFoundError:return None
+    def verified(self):
+        """Reuse a verified file version; re-read when metadata changes externally."""
+        with self.lock:
+            stamp=self.stamp()
+            if stamp!=self.checked:
+                self.valid=stamp is not None and self.verify(self.path,self.head,self.count);self.checked=stamp
+            return self.valid
     def append(self,event,payload):
-        self.count+=1;row={'seq':self.count,'event':event,'payload':payload,'previous':self.head};row['hash']=hashlib.sha256(canonical(row).encode()).hexdigest();self.head=row['hash']
-        with self.path.open('a',encoding='utf-8') as f:f.write(canonical(row)+'\n')
-        return row
+        with self.lock:
+            if self.stamp()!=self.expected:raise ValueError('审计文件发生外部变化，禁止接续写入，请保留记录核查')
+            row={'seq':self.count+1,'event':event,'payload':payload,'previous':self.head};row['hash']=hashlib.sha256(canonical(row).encode()).hexdigest()
+            with self.path.open('a',encoding='utf-8') as f:f.write(canonical(row)+'\n')
+            self.count=row['seq'];self.head=row['hash'];self.expected=self.stamp();self.checked=self.expected;self.valid=True
+            return row
     @staticmethod
-    def verify(path):
+    def verify(path,expected_head=None,expected_count=None):
         head='0'*64;seq=0
         try:
-            for line in Path(path).read_text(encoding='utf-8').splitlines():
-                if not line.strip():continue
-                r=json.loads(line);h=r.pop('hash');seq+=1
-                if r['previous']!=head or r['seq']!=seq or hashlib.sha256(canonical(r).encode()).hexdigest()!=h:return False
-                head=h
-            return True
-        except (OSError,ValueError,KeyError):return False
+            with Path(path).open(encoding='utf-8') as stream:
+                for line in stream:
+                    if not line.strip():continue
+                    r=json.loads(line);h=r.pop('hash');seq+=1
+                    if r['previous']!=head or r['seq']!=seq or hashlib.sha256(canonical(r).encode()).hexdigest()!=h:return False
+                    head=h
+            return (expected_head is None or head==expected_head) and (expected_count is None or seq==expected_count)
+        except (OSError,ValueError,KeyError,TypeError,AttributeError):return False
 
 def offload(cycles=30e6,size_bytes=40000,deadline_ms=180,priority=1,cloud=True,queue_ms=0.):
     if any(not isinstance(x,(int,float)) or not math.isfinite(x) for x in (cycles,size_bytes,deadline_ms,queue_ms)) or cycles<0 or size_bytes<0 or deadline_ms<=0 or queue_ms<0 or priority not in (1,2,3):raise ValueError('计算任务参数无效')
