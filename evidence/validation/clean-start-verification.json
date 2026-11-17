@@ -1,0 +1,24 @@
+{
+  "kind": "fresh-extraction-startup",
+  "archive": "E:\\比赛\\大创新平台\\交付\\晴空邻里_软件创新版_完整运行包_20261114.zip",
+  "started": "2026-11-14 19:14:52",
+  "checks": [
+    "原副本地面无活动任务",
+    "完整依赖实际解压",
+    "不携带原控制密钥",
+    "新解压目录网页健康",
+    "网页首页可访问",
+    "独立生成控制密钥",
+    "新副本桌面进程持续运行",
+    "桌面进程归属新解压副本",
+    "新解压副本17项业务检查",
+    "解压启动与业务联调共计少于10分钟"
+  ],
+  "scope": "Windows本机，新解压目录，使用包内Python；自建模拟飞控，无实机",
+  "extraction_seconds": 12.94,
+  "boot_seconds": 21.72,
+  "business_check_count": 17,
+  "elapsed_seconds": 180.05,
+  "passed": true,
+  "archive_sha256": "d96c158c1ef449677443db96dabeb231d75c2667babdc10ed269438db6ec4482"
+}

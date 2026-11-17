@@ -1,0 +1,132 @@
+{
+  "method": "SHA-256 of unmodified archive bytes or entries",
+  "archives": [
+    {
+      "container": "晴空邻里_软件创新版_含参赛技术文档与协作记录_20261114.zip",
+      "archive": "绿航智递_匿名参赛提交材料_20261023.zip",
+      "size_bytes": 186010324,
+      "sha256": "88c9d12a2a86237cfee0e92e8946973c707336782f92b44331f8d2dee74b68ee",
+      "samples": [
+        {
+          "archive_entry": "绿航智递_匿名参赛提交材料_20261023/02_参赛打包内容/01_作品及成果文件/平台程序/backend/planner.py",
+          "size_bytes": 14583,
+          "sha256": "17ea0bf0c1a10f8531990d736e42efaf98f63f6071323f68c961c126fa6a66cb",
+          "git_reference": "f04b4d89b3a91627efc6606cb5648b016eb1634b:backend/planner.py",
+          "git_sha256": "564ac344725444bc3c413e46d4537122194bb7fb0c9f2fc1c1455607499afaf7",
+          "same_bytes_as_git_reference": false,
+          "same_after_normalizing_line_endings": true
+        },
+        {
+          "archive_entry": "绿航智递_匿名参赛提交材料_20261023/02_参赛打包内容/01_作品及成果文件/平台程序/backend/solver.py",
+          "size_bytes": 664,
+          "sha256": "a3c110989983199d929c5554a3cc304d693573c2f5cdbcf62831263ccaa6bcb3",
+          "git_reference": "f04b4d89b3a91627efc6606cb5648b016eb1634b:backend/solver.py",
+          "git_sha256": "1f6d7a53d95231438da19bf1ddd62602e814bbcb716ca043f1554c76223bf637",
+          "same_bytes_as_git_reference": false,
+          "same_after_normalizing_line_endings": true
+        },
+        {
+          "archive_entry": "绿航智递_匿名参赛提交材料_20261023/02_参赛打包内容/01_作品及成果文件/平台程序/backend/simulation.py",
+          "size_bytes": 8050,
+          "sha256": "516365e36be0ec9032e36549b824659c078c0fb5649fd3619db7bdf874eb5a25",
+          "git_reference": "f04b4d89b3a91627efc6606cb5648b016eb1634b:backend/simulation.py",
+          "git_sha256": "17eaf18d4832c70001e3b7630c4ff42c4101fcea6bc7259cc22aedcfc74a3e87",
+          "same_bytes_as_git_reference": false,
+          "same_after_normalizing_line_endings": true
+        },
+        {
+          "archive_entry": "绿航智递_匿名参赛提交材料_20261023/02_参赛打包内容/01_作品及成果文件/平台程序/docs/ALGORITHMS.md",
+          "size_bytes": 7623,
+          "sha256": "9a24f0873521d79f2370adb56a5304ba1a2fe05aeedc0bf88ada13674ca4707a",
+          "evidence_file": "archive-20261023/ALGORITHMS.md"
+        },
+        {
+          "archive_entry": "绿航智递_匿名参赛提交材料_20261023/01_单独上传材料/作品截图/01_运行总览.png",
+          "size_bytes": 206750,
+          "sha256": "37a8d6a15e2e8aecdc09d82611fd792ef8fb2b5faa66f45899135b97d8fd0a22",
+          "evidence_file": "archive-20261023/01_运行总览.png"
+        },
+        {
+          "archive_entry": "绿航智递_匿名参赛提交材料_20261023/02_参赛打包内容/02_作品展示视频/绿航智递_实际运行与三维交互展示.mp4",
+          "size_bytes": 6105261,
+          "sha256": "3117aa2d57312e5432ec274aa485d1d8b1fc4e6c6f85f329af670401974c608b",
+          "evidence_file": "archive-20261023/旧版运行与三维展示.mp4"
+        }
+      ],
+      "autonomy_python_files": 0
+    },
+    {
+      "container": "晴空邻里_软件创新版_含参赛技术文档与协作记录_20261114.zip",
+      "archive": "绿航智递_三类模型与交互演示_20261022.zip",
+      "size_bytes": 2804307,
+      "sha256": "1a8b59c196d1fa147851ee7f4ef0e750268db503c3070658503e8b1a55b6ae6f",
+      "samples": [
+        {
+          "archive_entry": "三维模型交付_20261022/离线三维展示/viewer.mjs",
+          "size_bytes": 17853,
+          "sha256": "d6577218f0881e11f516fd5df9c6f1e56f77ca51874eb5febad6a9704a6c4471",
+          "git_reference": "f04b4d89b3a91627efc6606cb5648b016eb1634b:frontend/model3d/viewer.mjs",
+          "git_sha256": "c91f42da1babcf5e96ea0c091d17ff258d905d8c9bac5fe8dfcd755d81e68f8d",
+          "same_bytes_as_git_reference": false,
+          "same_after_normalizing_line_endings": false
+        },
+        {
+          "archive_entry": "三维模型交付_20261022/离线三维展示/models.mjs",
+          "size_bytes": 13539,
+          "sha256": "3150185a223a85734cbe165e7ecb9b2ce4080b1fbd31caeefb2246196e13fb0b",
+          "git_reference": "f04b4d89b3a91627efc6606cb5648b016eb1634b:frontend/model3d/models.mjs",
+          "git_sha256": "e6f3783e5c34eee19c129d6edca86b0d3159cf3eccc1d8d7ac9dbff263b9fea0",
+          "same_bytes_as_git_reference": false,
+          "same_after_normalizing_line_endings": false
+        },
+        {
+          "archive_entry": "三维模型交付_20261022/预览/01_太阳能辅助无人机.png",
+          "size_bytes": 147459,
+          "sha256": "bdb86e4e67206ae008724f99b45f18c7a0c1331e281959e4865a0a7f5e938e03",
+          "evidence_file": "archive-20261022/01_三维整机预览.png"
+        },
+        {
+          "archive_entry": "三维模型交付_20261022/预览/03_光伏共享站点.png",
+          "size_bytes": 180347,
+          "sha256": "43fe6ef6b94bb99bb10b0e28e58168087054a802c6db23ed1b88f16ee038fbb6",
+          "evidence_file": "archive-20261022/03_共享站点预览.png"
+        }
+      ]
+    },
+    {
+      "container": "晴空邻里_软件创新版_改进完整包_20261115.zip",
+      "samples": [
+        {
+          "archive_entry": "晴空邻里_软件创新版_20261114/reports/business-acceptance.json",
+          "size_bytes": 322517,
+          "sha256": "bb504956888349283aced0b3f9b6349cf6b7c8be06b2988ebd39997f035ffecb",
+          "evidence_file": "validation/business-acceptance.json"
+        },
+        {
+          "archive_entry": "晴空邻里_软件创新版_20261114/reports/clean-start-verification.json",
+          "size_bytes": 924,
+          "sha256": "d59accb7b8c5212f07ebad1a9bc81697fa4685a63eaa39438a92aa0a95f2ca33",
+          "evidence_file": "validation/clean-start-verification.json"
+        },
+        {
+          "archive_entry": "晴空邻里_软件创新版_20261114/reports/fixed-benchmark.json",
+          "size_bytes": 4244765,
+          "sha256": "c37190beab1bf0b8235c43ab0e7f454c44e53a25ef6cd402cc626cc4b218bd7e",
+          "evidence_file": "validation/fixed-benchmark.json"
+        },
+        {
+          "archive_entry": "晴空邻里_软件创新版_20261114/reports/official-sitl-acceptance.json",
+          "size_bytes": 101547,
+          "sha256": "7c3f776e4517668ed6b616c0d92133bf6297c464fe08faca47af753ce29ba405",
+          "evidence_file": "validation/official-sitl-acceptance.json"
+        },
+        {
+          "archive_entry": "晴空邻里_软件创新版_20261114/reports/usability-check-20261115.json",
+          "size_bytes": 332,
+          "sha256": "96483e482e61947ad9f23845ae0d5785b8dbdfe1ea5c6410a19241e2f466ac6a",
+          "evidence_file": "validation/usability-check-20261115.json"
+        }
+      ]
+    }
+  ]
+}

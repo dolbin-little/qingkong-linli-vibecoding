@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-15",
+  "passed": true,
+  "checks": [
+    "missing telemetry placeholder",
+    "manual entry and document",
+    "intro entry and document",
+    "browser full-window export",
+    "seven flight pages",
+    "community simulation explanation",
+    "community help entry",
+    "no script errors"
+  ],
+  "errors": []
+}
