@@ -1,0 +1,42 @@
+命令: python -m pytest -vv --disable-warnings tests_autonomy/test_landed_delivery.py tests_autonomy/test_business_loop.py
+============================= test session starts =============================
+platform win32 -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0 -- D:\比赛\.qingkong_review_20261117\clean-demo\qingkong-linli\runtime\python\python.exe
+cachedir: .pytest_cache
+rootdir: D:\比赛\晴空邻里_GitHub评审仓库
+plugins: anyio-4.15.1
+collecting ... collected 22 items
+
+tests_autonomy/test_landed_delivery.py::test_arrival_never_marks_delivery_in_cruise_air PASSED [  4%]
+tests_autonomy/test_landed_delivery.py::test_release_only_after_disarmed_at_delivery_ground PASSED [  9%]
+tests_autonomy/test_landed_delivery.py::test_release_ack_alone_is_insufficient PASSED [ 13%]
+tests_autonomy/test_landed_delivery.py::test_previous_delivery_feedback_arriving_after_new_request_is_ignored[1000.0] PASSED [ 18%]
+tests_autonomy/test_landed_delivery.py::test_previous_delivery_feedback_arriving_after_new_request_is_ignored[4294965.296] PASSED [ 22%]
+tests_autonomy/test_landed_delivery.py::test_payload_feedback_without_ack_times_out_grounded PASSED [ 27%]
+tests_autonomy/test_landed_delivery.py::test_dual_confirmation_then_preflight_before_takeoff PASSED [ 31%]
+tests_autonomy/test_landed_delivery.py::test_payload_rejection_does_not_return_or_report_success PASSED [ 36%]
+tests_autonomy/test_landed_delivery.py::test_simulated_latch_checks_ground_location_and_arm_state PASSED [ 40%]
+tests_autonomy/test_landed_delivery.py::test_task_history_cannot_show_previous_delivery_confirmation PASSED [ 45%]
+tests_autonomy/test_landed_delivery.py::test_full_closed_loop_lands_releases_rearms_and_returns PASSED [ 50%]
+tests_autonomy/test_business_loop.py::test_all_public_pickups_have_clear_ground_routes PASSED [ 54%]
+tests_autonomy/test_business_loop.py::test_reservation_excludes_legacy_dispatch_and_cancel_restores_once PASSED [ 59%]
+tests_autonomy/test_business_loop.py::test_delivery_confirmed_before_return_is_not_return_complete PASSED [ 63%]
+tests_autonomy/test_business_loop.py::test_failed_delivery_never_delivered_and_requires_recovery PASSED [ 68%]
+tests_autonomy/test_business_loop.py::test_restart_preserves_reserved_stock_and_blocks_new_dispatch PASSED [ 72%]
+tests_autonomy/test_business_loop.py::test_no_inventory_or_overweight_rejects_without_mutation PASSED [ 77%]
+tests_autonomy/test_business_loop.py::test_postdelivery_failure_does_not_refund_delivered_goods PASSED [ 81%]
+tests_autonomy/test_business_loop.py::test_preview_does_not_reserve_inventory PASSED [ 86%]
+tests_autonomy/test_business_loop.py::test_concurrent_load_reserves_once PASSED [ 90%]
+tests_autonomy/test_business_loop.py::test_preview_does_not_hold_control_lock PASSED [ 95%]
+tests_autonomy/test_business_loop.py::test_simulator_initial_battery_can_only_change_on_ground PASSED [100%]
+
+============================= 22 passed in 6.30s ==============================
+pytest exit code: 0
+
+补充跨层复验（临时 SQLite，真实状态机与订单台账）
+PASS | 仅成功回执 | 飞行=DELIVERY_RELEASING | 订单=flight_active | 库存=reserved | 故障=无
+PASS | 成功回执 + 旧时间戳反馈 | 飞行=DELIVERY_RELEASING | 订单=flight_active | 库存=reserved | 故障=无
+PASS | 成功回执 + 本次释放反馈 | 飞行=DEPARTURE_ARMING | 订单=delivered | 库存=consumed | 故障=无
+PASS | 重复同步和返航阶段变化 | 库存未二次扣减，送达时间未改写，返航完成后才释放运力
+PASS | 卸货拒绝 | 飞行=STOPPED | 订单=flight_exception | 库存=reserved | 故障=PAYLOAD_RELEASE_REJECTED
+PASS | 成功回执后仍无反馈，超时 | 飞行=STOPPED | 订单=flight_exception | 库存=reserved | 故障=PAYLOAD_CONFIRM_TIMEOUT
+补充复验退出码: 0
