@@ -1,4 +1,9 @@
+from types import SimpleNamespace
+
+import pytest
+
 from autonomy.engine import FlightEngine
+from autonomy.mavlink_adapter import MAVLinkAdapter
 from autonomy.models import Telemetry,scene,norm
 from autonomy.planning import astar
 from autonomy.simulator import Plant
@@ -31,6 +36,42 @@ def test_release_only_after_disarmed_at_delivery_ground(tmp_path):
 def test_release_ack_alone_is_insufficient(tmp_path):
     e=setup(tmp_path,'DELIVERY_RELEASING');e.adapter.acks=[{'command':31002,'accepted':True,'at':1000}];e.tick(1004)
     assert not e.delivered and not e.adapter.arms and e.phase=='DELIVERY_RELEASING'
+
+
+@pytest.mark.parametrize("request_at", [1000.0, 2**32 / 1000 - 2])
+def test_previous_delivery_feedback_arriving_after_new_request_is_ignored(tmp_path, request_at):
+    engine = setup(tmp_path, "DELIVERY_RELEASING")
+    engine.delivery_release_at = request_at
+    engine.adapter.acks = [{"command": 31002, "accepted": True, "at": request_at}]
+    decoder = MAVLinkAdapter.__new__(MAVLinkAdapter)
+    decoder.endpoint = "udpout:127.0.0.1:18751"
+    decoder.sys = 1
+    decoder.pending = {}
+    decoder.received = 0
+    decoder.t = engine.adapter.t
+
+    def receive_feedback(sent_at, received_at):
+        message = SimpleNamespace(
+            get_type=lambda: "NAMED_VALUE_FLOAT",
+            get_srcSystem=lambda: 1,
+            name="PAYLOAD",
+            value=1.0,
+            time_boot_ms=int(sent_at * 1000) % 2**32,
+        )
+        messages = iter((message, None))
+        decoder.link = SimpleNamespace(recv_match=lambda **_: next(messages))
+        decoder.last_gcs = received_at
+        decoder.poll(received_at)
+        engine.adapter.payload_feedback = decoder.payload_feedback
+        engine.tick(received_at)
+
+    receive_feedback(request_at - 1, request_at + 4)
+    assert engine.phase == "DELIVERY_RELEASING"
+    assert not engine.delivered and not engine.returning and not engine.adapter.arms
+
+    receive_feedback(request_at + 4.25, request_at + 4.5)
+    assert engine.delivered and engine.phase == "DEPARTURE_ARMING"
+
 
 def test_payload_feedback_without_ack_times_out_grounded(tmp_path):
     e=setup(tmp_path,'DELIVERY_RELEASING');e.adapter.payload_feedback={'released':True,'at':1011};e.tick(1011)

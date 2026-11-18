@@ -50,7 +50,12 @@ class MAVLinkAdapter:
             elif kind=='ATTITUDE':self.t.yaw=m.yaw
             elif kind=='NAMED_VALUE_FLOAT' and self.endpoint=='udpout:127.0.0.1:18751':
                 name=m.name.decode() if isinstance(m.name,bytes) else m.name
-                if name=='PAYLOAD':self.payload_feedback={'released':m.value==1.,'at':now}
+                if name == 'PAYLOAD':
+                    # The loopback simulator and adapter share a monotonic clock.
+                    # Recover the send time from its wrapping 32-bit millisecond counter.
+                    now_ms = int(now * 1000)
+                    age_ms = (now_ms - m.time_boot_ms) % (2**32)
+                    self.payload_feedback = {'released': m.value == 1.0, 'at': (now_ms - age_ms) / 1000}
                 if name in ('DYN_N','DYN_E','DYN_U') and math.isfinite(m.value):
                     self.observation[name]=(m.value,now)
                     if len(self.observation)==3 and all(now-v[1]<.15 for v in self.observation.values()):self.detection={'id':'SIM-DYNAMIC','position':[self.observation[k][0] for k in ('DYN_N','DYN_E','DYN_U')],'radius':2.,'at':now}
