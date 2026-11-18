@@ -1,0 +1,23 @@
+源码提交 9778d8b1d7e3677c42b48c5e6691f26b2d898916
+2026-11-18 10:23:05 +08:00
+命令 python -X utf8 -B -m pytest tests_autonomy/test_business_loop.py -vv
+============================= test session starts =============================
+platform win32 -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0 -- D:\比赛\.qingkong_review_20261117\qk18-h9nvgjpe\qingkong-linli\runtime\python\python.exe
+cachedir: D:\比赛\.qingkong_review_20261117\.pytest_chain02
+rootdir: D:\比赛\晴空邻里_GitHub评审仓库
+plugins: anyio-4.15.1
+collecting ... collected 11 items
+
+tests_autonomy/test_business_loop.py::test_all_public_pickups_have_clear_ground_routes PASSED [  9%]
+tests_autonomy/test_business_loop.py::test_reservation_excludes_legacy_dispatch_and_cancel_restores_once PASSED [ 18%]
+tests_autonomy/test_business_loop.py::test_delivery_confirmed_before_return_is_not_return_complete PASSED [ 27%]
+tests_autonomy/test_business_loop.py::test_failed_delivery_never_delivered_and_requires_recovery PASSED [ 36%]
+tests_autonomy/test_business_loop.py::test_restart_preserves_reserved_stock_and_blocks_new_dispatch PASSED [ 45%]
+tests_autonomy/test_business_loop.py::test_no_inventory_or_overweight_rejects_without_mutation PASSED [ 54%]
+tests_autonomy/test_business_loop.py::test_postdelivery_failure_does_not_refund_delivered_goods PASSED [ 63%]
+tests_autonomy/test_business_loop.py::test_preview_does_not_reserve_inventory PASSED [ 72%]
+tests_autonomy/test_business_loop.py::test_concurrent_load_reserves_once PASSED [ 81%]
+tests_autonomy/test_business_loop.py::test_preview_does_not_hold_control_lock PASSED [ 90%]
+tests_autonomy/test_business_loop.py::test_simulator_initial_battery_can_only_change_on_ground PASSED [100%]
+
+============================= 11 passed in 6.03s ==============================

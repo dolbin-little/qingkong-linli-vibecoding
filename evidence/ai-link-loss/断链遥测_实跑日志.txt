@@ -1,0 +1,10 @@
+断链触发 {"phase": "LINK_LOST", "fault": "LINK_LOSS", "armed": true, "height_m": 12.0, "speed_m_s": 0.0, "heartbeat_age_s": 3, "position_age_s": 3, "land_requests": 1, "velocity_commands": 0, "delivered": false}
+① 没有新遥测 {"phase": "LINK_LOST", "fault": "LINK_LOSS", "armed": true, "height_m": 12.0, "speed_m_s": 0.0, "heartbeat_age_s": 3.1, "position_age_s": 3.1, "land_requests": 1, "velocity_commands": 0, "delivered": false}
+② 缓存显示未解锁、高度 12 米 {"phase": "LINK_LOST", "fault": "LINK_LOSS", "armed": false, "height_m": 12.0, "speed_m_s": 0.0, "heartbeat_age_s": 3.2, "position_age_s": 3.2, "land_requests": 1, "velocity_commands": 0, "delivered": false}
+补验：缓存即使显示 0 米 {"phase": "LINK_LOST", "fault": "LINK_LOSS", "armed": false, "height_m": 0, "speed_m_s": 0.0, "heartbeat_age_s": 3.3, "position_age_s": 3.3, "land_requests": 1, "velocity_commands": 0, "delivered": false}
+③ 新心跳、新位置、0 米、0 米/秒且未解锁 {"phase": "STOPPED", "fault": "LINK_LOSS", "armed": false, "height_m": 0, "speed_m_s": 0.0, "heartbeat_age_s": 0.0, "position_age_s": 0.0, "land_requests": 2, "velocity_commands": 0, "delivered": false}
+补验：链路恢复但仍在 12 米 {"phase": "LANDING", "fault": "LINK_LOSS", "armed": false, "height_m": 12.0, "speed_m_s": 0.0, "heartbeat_age_s": 0.0, "position_age_s": 0.0, "land_requests": 2, "velocity_commands": 0, "delivered": false}
+补验：链路恢复，0 米但速度 0.21 米/秒 {"phase": "LANDING", "fault": "LINK_LOSS", "armed": false, "height_m": 0, "speed_m_s": 0.21, "heartbeat_age_s": 0.1, "position_age_s": 0.1, "land_requests": 2, "velocity_commands": 0, "delivered": false}
+补验：链路恢复，0 米但仍解锁 {"phase": "LANDING", "fault": "LINK_LOSS", "armed": true, "height_m": 0, "speed_m_s": 0.0, "heartbeat_age_s": 0.0, "position_age_s": 0.0, "land_requests": 2, "velocity_commands": 0, "delivered": false}
+补验：失联保护锁止前已看到未解锁旧数据 {"phase": "LANDING", "fault": "AUTOPILOT_DISARMED", "armed": false, "height_m": 12.0, "speed_m_s": 0.0, "heartbeat_age_s": 3, "position_age_s": 3, "land_requests": 0, "velocity_commands": 0, "delivered": false}
+PASS | 3 项指定情景及 5 项补充边界

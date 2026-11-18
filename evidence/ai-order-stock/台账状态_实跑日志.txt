@@ -1,0 +1,11 @@
+预占后 {"order": "flight_reserved", "task": "READY", "stock": "reserved", "available": 11, "aircraft": "flight_reserved", "delivered_at": null}
+首次同步送达 {"order": "delivered", "task": "RETURNING", "stock": "consumed", "available": 11, "aircraft": "flight_active", "delivered_at": 1794968641.9872463}
+同阶段重复同步 {"order": "delivered", "task": "RETURNING", "stock": "consumed", "available": 11, "aircraft": "flight_active", "delivered_at": 1794968641.9872463}
+返航完成 {"order": "delivered", "task": "COMPLETED", "stock": "consumed", "available": 11, "aircraft": "idle", "delivered_at": 1794968641.9872463}
+尝试载入新任务被拒绝 {"order": "LH-DEMO-002", "status": "pending", "reason": "单飞行器通道已被任务 interrupted-READY 占用，请完成或核对恢复后再载入"}
+READY 重启前 {"order": "flight_reserved", "task": "READY", "stock": "reserved", "available": 11, "aircraft": "flight_reserved", "delivered_at": null}
+READY 重启后 {"order": "flight_exception", "task": "INTERRUPTED", "stock": "reserved", "available": 11, "aircraft": "flight_reserved", "delivered_at": null}
+尝试载入新任务被拒绝 {"order": "LH-DEMO-002", "status": "pending", "reason": "单飞行器通道已被任务 interrupted-EXECUTING 占用，请完成或核对恢复后再载入"}
+EXECUTING 重启前 {"order": "flight_active", "task": "EXECUTING", "stock": "reserved", "available": 11, "aircraft": "flight_active", "delivered_at": null}
+EXECUTING 重启后 {"order": "flight_exception", "task": "INTERRUPTED", "stock": "reserved", "available": 11, "aircraft": "flight_active", "delivered_at": null}
+PASS | 同阶段重复同步、READY/EXECUTING 模拟重启及新任务阻断

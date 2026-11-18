@@ -26,6 +26,10 @@ Git 进一步记录了 `dcb0744` 的轨迹导出与日志改进、`41a827e` 的�
 
 [第 ① 条完整复检记录](ai-landing-delivery/README.md)补充了选手提出的卸货验收条件、两例修复前失败和修复后 22 项通过的原始日志，并对应修复提交 `630f005`。
 
+[第 ② 条订单与库存复检](ai-order-stock/README.md)记录选手的测试要求、AI 回复原文及实跑日志。重复同步和重启保护，11 项 pytest 通过。
+
+[第 ③ 条断链与落地复检](ai-link-loss/README.md)记录选手的测试要求、AI 回复原文及实跑日志。三种模拟遥测情景，12 项 pytest 通过。
+
 ## 复核顺序
 
 1. 用 [项目 README](../README.md) 和 [启动验收记录](validation/clean-start-verification.json) 复现一笔正常模拟配送。

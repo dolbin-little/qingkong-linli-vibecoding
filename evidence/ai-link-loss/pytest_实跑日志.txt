@@ -1,0 +1,23 @@
+源码提交 9778d8b1d7e3677c42b48c5e6691f26b2d898916
+2026-11-18 10:26:30 +08:00
+命令 python -X utf8 -B -m pytest tests_autonomy/test_safety_operations.py -vv -p no:cacheprovider
+============================= test session starts =============================
+platform win32 -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0 -- D:\比赛\.qingkong_review_20261117\qk18-h9nvgjpe\qingkong-linli\runtime\python\python.exe
+rootdir: D:\比赛\晴空邻里_GitHub评审仓库
+plugins: anyio-4.15.1
+collecting ... collected 12 items
+
+tests_autonomy/test_safety_operations.py::test_readonly_external_never_sends_protective_motion PASSED [  8%]
+tests_autonomy/test_safety_operations.py::test_landing_cannot_be_replaced_by_stale_sensor_hold PASSED [ 16%]
+tests_autonomy/test_safety_operations.py::test_link_loss_waits_for_fresh_ground_evidence PASSED [ 25%]
+tests_autonomy/test_safety_operations.py::test_unarmed_aloft_is_not_ground_confirmation PASSED [ 33%]
+tests_autonomy/test_safety_operations.py::test_manual_lease_expiry_zeros_and_latches PASSED [ 41%]
+tests_autonomy/test_safety_operations.py::test_release_manual_lease_immediately_holds PASSED [ 50%]
+tests_autonomy/test_safety_operations.py::test_manual_takeover_requires_owner_and_resets_old_velocity PASSED [ 58%]
+tests_autonomy/test_safety_operations.py::test_manual_resume_requires_healthy_telemetry_and_owner PASSED [ 66%]
+tests_autonomy/test_safety_operations.py::test_autonomous_task_does_not_depend_on_ui_lease PASSED [ 75%]
+tests_autonomy/test_safety_operations.py::test_timing_only_latches_after_three_consecutive_misses PASSED [ 83%]
+tests_autonomy/test_safety_operations.py::test_no_safe_return_lands_instead_of_sending_old_route PASSED [ 91%]
+tests_autonomy/test_safety_operations.py::test_stale_telemetry_cancels_delayed_arm_request PASSED [100%]
+
+============================= 12 passed in 0.56s ==============================
